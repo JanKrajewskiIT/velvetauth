@@ -1,6 +1,6 @@
 {
   "name": "@jankrajewskiit/auth",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "type": "module",
   "license": "MIT",
   "repository": {
@@ -20,7 +20,7 @@
     "dist/**/*"
   ],
   "engines": {
-    "node": ">=20"
+    "node": ">=25"
   },
   "scripts": {
     "prepublishOnly": "npm run verify",
@@ -35,11 +35,12 @@
     "prepare": "husky"
   },
   "peerDependencies": {
-    "oidc-client-ts": ">=3.1.0"
+    "oidc-client-ts": ">=3.1.0",
+    "solid-js": ">=1.9.0"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.2",
-    "@jankrajewskiit/configs": "^1.1.4",
+    "@jankrajewskiit/configs": "^1.1.7",
     "@types/node": "^25.6.0",
     "eslint": "^9.39.4",
     "husky": "^9.1.7",
@@ -47,6 +48,7 @@
     "oidc-client-ts": "^3.5.0",
     "prettier": "^3.8.3",
     "publint": "^0.3.18",
+    "solid-js": "^1.9.12",
     "typescript": "~6.0.3",
     "vite": "^8.0.10",
     "vite-plugin-dts": "^4.5.4"

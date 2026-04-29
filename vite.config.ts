@@ -6,7 +6,7 @@ export default defineConfig(async () =>
     {},
     {
       fileName: 'velvet-auth',
-      externalPackages: ['oidc-client-ts'],
+      externalPackages: ['oidc-client-ts', 'solid-js'],
       dts: { tsconfigPath: './tsconfig.app.json' },
     },
   ),

@@ -1,6 +1,10 @@
+export type { AuthContextValue, AuthProviderProps } from './AuthProvider';
+export { AuthProvider, useAuth } from './AuthProvider';
 export type { OidcAuthConfig, OidcAuthUserManagerFactoryConfig } from './oidc';
 export {
   getAuthAccessToken,
+  getPostLogoutRedirectUri,
+  getRedirectUri,
   getReturnUrlStorageKey,
   getTimeoutMs,
   getUserManager,

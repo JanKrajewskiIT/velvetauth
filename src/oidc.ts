@@ -12,6 +12,8 @@ interface OidcAuthConfig {
   authority: string;
   clientId: string;
   appUrl: string;
+  redirectUri?: string;
+  postLogoutRedirectUri?: string;
   silentRedirectUri?: string;
   accountUrl?: string;
   timeoutMs?: number;
@@ -21,7 +23,8 @@ interface OidcAuthConfig {
 interface OidcAuthUserManagerFactoryConfig {
   authority: string;
   clientId: string;
-  appUrl: string;
+  redirectUri: string;
+  postLogoutRedirectUri: string;
   silentRedirectUri?: string;
   automaticSilentRenew?: boolean;
 }
@@ -44,8 +47,8 @@ const getResolvedFactory = (): ((config: OidcAuthUserManagerFactoryConfig) => Us
     new UserManager({
       authority: config.authority,
       client_id: config.clientId,
-      redirect_uri: config.appUrl,
-      post_logout_redirect_uri: config.appUrl,
+      redirect_uri: config.redirectUri,
+      post_logout_redirect_uri: config.postLogoutRedirectUri,
       silent_redirect_uri: config.silentRedirectUri,
       userStore: new WebStorageStateStore({ store: sessionStorage }),
       automaticSilentRenew: config.automaticSilentRenew ?? true,
@@ -61,7 +64,11 @@ const setAuthUserManagerFactory = (
 };
 
 const buildCacheKey = (config: OidcAuthConfig): string =>
-  `${config.authority}::${config.clientId}::${config.appUrl}::${config.silentRedirectUri ?? ''}`;
+  `${config.authority}::${config.clientId}::${config.appUrl}::${config.redirectUri ?? ''}::${config.postLogoutRedirectUri ?? ''}::${config.silentRedirectUri ?? ''}`;
+
+const getRedirectUri = (config: OidcAuthConfig): string => config.redirectUri ?? config.appUrl;
+
+const getPostLogoutRedirectUri = (config: OidcAuthConfig): string => config.postLogoutRedirectUri ?? config.appUrl;
 
 const getUserManager = (config: OidcAuthConfig): UserManager => {
   if (!isBrowserRuntime()) {
@@ -73,7 +80,8 @@ const getUserManager = (config: OidcAuthConfig): UserManager => {
     userManagerCache.instance = getResolvedFactory()({
       authority: config.authority,
       clientId: config.clientId,
-      appUrl: config.appUrl,
+      redirectUri: getRedirectUri(config),
+      postLogoutRedirectUri: getPostLogoutRedirectUri(config),
       silentRedirectUri: config.silentRedirectUri,
       automaticSilentRenew: true,
     });
@@ -93,18 +101,20 @@ const handleAuthRedirectCallback = async (config: OidcAuthConfig): Promise<boole
     return false;
   }
 
-  if (!isOidcCallbackReturnUrl(window.location.href, config.appUrl)) {
+  const redirectUri = getRedirectUri(config);
+
+  if (!isOidcCallbackReturnUrl(window.location.href, redirectUri)) {
     return false;
   }
 
   const callbackUser = await getUserManager(config).signinRedirectCallback(window.location.href);
-  const stateReturnUrl = resolveCallbackReturnUrl(callbackUser.state, config.appUrl);
+  const stateReturnUrl = resolveCallbackReturnUrl(callbackUser.state, redirectUri);
   const storageKey = getReturnUrlStorageKey(config);
   const storedReturnUrl = sessionStorage.getItem(storageKey) ?? undefined;
   sessionStorage.removeItem(storageKey);
 
   const safeStoredReturnUrl =
-    storedReturnUrl && !isOidcCallbackReturnUrl(storedReturnUrl, config.appUrl)
+    storedReturnUrl && !isOidcCallbackReturnUrl(storedReturnUrl, redirectUri)
       ? normalizeReturnUrl(storedReturnUrl)
       : undefined;
   const targetUrl = stateReturnUrl ?? safeStoredReturnUrl ?? '/';
@@ -147,6 +157,8 @@ const getAuthAccessToken = async (config: OidcAuthConfig): Promise<string | unde
 export type { OidcAuthConfig, OidcAuthUserManagerFactoryConfig };
 export {
   getAuthAccessToken,
+  getPostLogoutRedirectUri,
+  getRedirectUri,
   getReturnUrlStorageKey,
   getTimeoutMs,
   getUserManager,
