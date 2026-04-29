@@ -1,13 +1,14 @@
 # @jankrajewskiit/auth
 
-Headless OIDC authentication primitives extracted from `@jankrajewskiit/ui`.
+OIDC authentication package for `SolidJS` applications extracted from `@jankrajewskiit/ui`.
 
-Provides framework-agnostic helpers around `oidc-client-ts`:
+Provides `SolidJS` auth primitives and helpers around `oidc-client-ts`:
 
 - `OidcAuthConfig`, `OidcAuthUserManagerFactoryConfig`
+- `AuthProvider`, `useAuth`
 - `getUserManager`, `setAuthUserManagerFactory`
 - `handleAuthRedirectCallback`, `getAuthAccessToken`
-- `getReturnUrlStorageKey`, `getTimeoutMs`
+- `getRedirectUri`, `getPostLogoutRedirectUri`, `getReturnUrlStorageKey`, `getTimeoutMs`
 - Browser/runtime utilities: `isBrowserRuntime`, `withTimeout`,
   `normalizePathname`, `normalizeReturnUrl`, `getCurrentReturnUrl`,
   `isOidcCallbackReturnUrl`, `resolveCallbackReturnUrl`
@@ -19,10 +20,9 @@ Provides framework-agnostic helpers around `oidc-client-ts`:
 ## Peer dependencies
 
 - `oidc-client-ts`
+- `solid-js`
 
 ## Notes
 
-UI-bound pieces (`AuthProvider`, `AuthGuard`, `AuthActionButton`) remain in
-`@jankrajewskiit/ui` since they depend on theme components and i18n. This
-package contains only the headless layer that any Solid/React/vanilla app can
-consume.
+This package is intentionally opinionated for `SolidJS` apps and includes the
+authentication provider surface together with lower-level OIDC helpers.
