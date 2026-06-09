@@ -1,4 +1,8 @@
 {
   "extends": "@jankrajewskiit/configs/tsconfig/lib",
+  "compilerOptions": {
+    "rootDir": "src",
+    "types": ["vite/client"]
+  },
   "include": ["src"]
 }

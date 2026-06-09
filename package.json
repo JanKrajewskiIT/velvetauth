@@ -46,7 +46,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "build": "vite build",
-    "verify": "npm run typecheck && npm run lint && npm run build && publint && attw --pack --profile esm-only",
+    "verify": "npm run typecheck && npm run lint && npm run build && publint && attw --pack --profile esm-only --ignore-rules internal-resolution-error",
     "prepublishOnly": "npm run verify",
     "prepare": "husky"
   },

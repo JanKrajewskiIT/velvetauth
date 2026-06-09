@@ -8,6 +8,7 @@ export default defineConfig(async () =>
       entry: 'src/index.ts',
       fileName: 'index',
       externalizeFromPackageJson: true,
+      preserveModules: false,
     },
   ),
 );
