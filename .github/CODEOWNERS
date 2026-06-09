@@ -1,0 +1,12 @@
+*                       @jankrajewskiit
+/specs/                  @jankrajewskiit
+/src/                    @jankrajewskiit
+/.github/workflows/      @jankrajewskiit
+/package.json            @jankrajewskiit
+/package-lock.json       @jankrajewskiit
+/.npmrc                  @jankrajewskiit
+/eslint.config.mjs       @jankrajewskiit
+/vite.config.ts          @jankrajewskiit
+/tsconfig.json           @jankrajewskiit
+/lint-staged.config.mjs  @jankrajewskiit
+/.husky/pre-commit       @jankrajewskiit

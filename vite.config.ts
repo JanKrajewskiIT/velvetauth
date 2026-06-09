@@ -5,9 +5,9 @@ export default defineConfig(async () =>
   createSolidLibViteConfig(
     {},
     {
-      fileName: 'velvet-auth',
-      externalPackages: ['oidc-client-ts', 'solid-js'],
-      dts: { tsconfigPath: './tsconfig.app.json' },
+      entry: 'src/index.ts',
+      fileName: 'index',
+      externalizeFromPackageJson: true,
     },
   ),
 );

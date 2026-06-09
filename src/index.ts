@@ -1,29 +1,35 @@
-export type { AuthContextValue, AuthProviderProps } from './AuthProvider';
-export { AuthProvider, useAuth } from './AuthProvider';
-export type { OidcAuthConfig, OidcAuthUserManagerFactoryConfig } from './oidc';
+export { getAuthAccessToken } from './access-token';
 export {
-  getAuthAccessToken,
+  type AuthContextValue,
+  AuthProvider,
+  type AuthProviderProps,
+  type SignInOptions,
+  useAuth,
+} from './AuthProvider';
+export { handleAuthRedirectCallback } from './callback';
+export {
+  getAccountUrl,
   getPostLogoutRedirectUri,
   getRedirectUri,
   getReturnUrlStorageKey,
+  getScope,
+  getSilentRedirectUri,
   getTimeoutMs,
-  getUserManager,
-  handleAuthRedirectCallback,
-  setAuthUserManagerFactory,
-} from './oidc';
+  type OidcAuthConfig,
+} from './config';
 export {
-  buildStoredUserStorageKey,
+  type AccessTokenPayload,
   decodeAccessTokenPayload,
   extractRolesFromAccessToken,
-  getCurrentReturnUrl,
-  getStoredUser,
-  isBrowserRuntime,
-  isOidcCallbackReturnUrl,
   matchesAnyRole,
   matchesRole,
-  normalizePathname,
-  normalizeReturnUrl,
-  resolveCallbackReturnUrl,
-  resolveProfileValue,
-  withTimeout,
-} from './utils';
+} from './jwt';
+export { getCurrentReturnUrl, isOidcCallbackReturnUrl, normalizeReturnUrl } from './return-url';
+export { isBrowserRuntime, withTimeout } from './runtime';
+export { buildStoredUserStorageKey, getStoredUser } from './storage';
+export {
+  type AuthUserManager,
+  type OidcAuthUserManagerFactory,
+  type OidcAuthUserManagerFactoryConfig,
+  setAuthUserManagerFactory,
+} from './user-manager';
