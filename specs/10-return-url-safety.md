@@ -15,20 +15,20 @@ The normalizer MUST be pure — no DOM access, no storage access. Normalization 
 
 Input → expected output reference:
 
-| Input | Output |
-| --- | --- |
-| unset | `"/"` |
-| empty string | `"/"` |
-| `"/"` | `"/"` |
-| `"/admin"` | `"/admin"` |
-| `"/admin/users?tab=active"` | `"/admin/users?tab=active"` |
-| `"/admin#section"` | `"/admin#section"` |
-| `"https://app/admin"` | `"/"` |
-| `"//attacker.com/path"` | `"/"` |
-| `"javascript:alert(1)"` | `"/"` |
-| `"admin"` (no leading slash) | `"/"` |
-| `"?next=1"` (query-only) | `"/"` |
-| `"#hash"` (hash-only) | `"/"` |
+| Input                        | Output                      |
+| ---------------------------- | --------------------------- |
+| unset                        | `"/"`                       |
+| empty string                 | `"/"`                       |
+| `"/"`                        | `"/"`                       |
+| `"/admin"`                   | `"/admin"`                  |
+| `"/admin/users?tab=active"`  | `"/admin/users?tab=active"` |
+| `"/admin#section"`           | `"/admin#section"`          |
+| `"https://app/admin"`        | `"/"`                       |
+| `"//attacker.com/path"`      | `"/"`                       |
+| `"javascript:alert(1)"`      | `"/"`                       |
+| `"admin"` (no leading slash) | `"/"`                       |
+| `"?next=1"` (query-only)     | `"/"`                       |
+| `"#hash"` (hash-only)        | `"/"`                       |
 
 ## Step 2 — State resolver
 

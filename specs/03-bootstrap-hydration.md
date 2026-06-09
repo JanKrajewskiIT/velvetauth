@@ -35,17 +35,17 @@ Event subscriptions MUST persist across re-renders of the configuration. If the 
 
 The provider MUST expose a reactive context that consumer code reads through a hook (suggested name: `useAuth`). The context exposes the values below as reactive accessors so SolidJS components automatically re-render on change.
 
-| Accessor | Type | Semantics |
-| --- | --- | --- |
-| User | object or null-equivalent | Last known OIDC user record. |
-| Is loading | boolean | True only between the start of callback processing and the first state commit. |
-| Is authenticated | boolean | True iff a user is present and not expired. |
-| Error | string or null-equivalent | Last error message; null after any successful operation. |
-| Access token | string or unset | Convenience accessor over the current user. |
-| Roles | array of strings | See [09-identity-exposure](09-identity-exposure.md). |
-| First name, last name, email, username, account URL | strings | See [09-identity-exposure](09-identity-exposure.md). |
-| Role helpers | functions | See [09-identity-exposure](09-identity-exposure.md). |
-| Sign-in, sign-out, manual silent renewal | async functions | See [04](04-sign-in.md), [06](06-silent-renewal.md), [07](07-sign-out.md). |
+| Accessor                                            | Type                      | Semantics                                                                      |
+| --------------------------------------------------- | ------------------------- | ------------------------------------------------------------------------------ |
+| User                                                | object or null-equivalent | Last known OIDC user record.                                                   |
+| Is loading                                          | boolean                   | True only between the start of callback processing and the first state commit. |
+| Is authenticated                                    | boolean                   | True iff a user is present and not expired.                                    |
+| Error                                               | string or null-equivalent | Last error message; null after any successful operation.                       |
+| Access token                                        | string or unset           | Convenience accessor over the current user.                                    |
+| Roles                                               | array of strings          | See [09-identity-exposure](09-identity-exposure.md).                           |
+| First name, last name, email, username, account URL | strings                   | See [09-identity-exposure](09-identity-exposure.md).                           |
+| Role helpers                                        | functions                 | See [09-identity-exposure](09-identity-exposure.md).                           |
+| Sign-in, sign-out, manual silent renewal            | async functions           | See [04](04-sign-in.md), [06](06-silent-renewal.md), [07](07-sign-out.md).     |
 
 All accessors MUST be safe to read inside SolidJS JSX without manual untracking; they MUST be implemented as memoized derivations over the underlying signal state. Initial hydration MUST be synchronous; the consumer's first render MUST observe the hydrated user.
 

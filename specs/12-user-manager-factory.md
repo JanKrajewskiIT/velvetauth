@@ -22,15 +22,15 @@ Common use cases for the factory:
 
 The factory MUST receive a sub-configuration record (suggested type name: `OidcAuthUserManagerFactoryConfig`) containing exactly:
 
-| Field | Description |
-| --- | --- |
-| IdP authority | Pass-through from the consumer configuration. |
-| OIDC client identifier | Pass-through. |
-| Resolved redirect URI | Defaulted from the consumer configuration. |
-| Resolved post-logout redirect URI | Defaulted from the consumer configuration. |
-| Resolved silent redirect URI | Optional pass-through. |
-| Automatic silent renewal flag | Currently always passed as true by the framework; the factory MAY honor or override. |
-| Resolved OAuth scope | Pass-through after defaulting; the factory SHOULD forward this verbatim to the underlying OIDC client. |
+| Field                             | Description                                                                                            |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| IdP authority                     | Pass-through from the consumer configuration.                                                          |
+| OIDC client identifier            | Pass-through.                                                                                          |
+| Resolved redirect URI             | Defaulted from the consumer configuration.                                                             |
+| Resolved post-logout redirect URI | Defaulted from the consumer configuration.                                                             |
+| Resolved silent redirect URI      | Optional pass-through.                                                                                 |
+| Automatic silent renewal flag     | Currently always passed as true by the framework; the factory MAY honor or override.                   |
+| Resolved OAuth scope              | Pass-through after defaulting; the factory SHOULD forward this verbatim to the underlying OIDC client. |
 
 Fields NOT passed to the factory (framework-level concerns): account console URL, async operation timeout, return-URL storage key.
 
@@ -42,11 +42,11 @@ The factory MUST be registered before any consumer triggers OIDC client resoluti
 
 If the factory is registered after resolution has already populated the cache, the cached instance is replaced. Provider subscriptions bound to the previous instance remain attached to it and effectively go silent. Consumers MUST treat post-mount factory registration as a require-remount scenario.
 
-| Trigger | Effect |
-| --- | --- |
-| Registering a factory (any value) | Clears the cached instance; clears the cached identity key. |
-| Resolving the OIDC client with a new identity key | Calls the active factory; replaces the cached instance and identity key. |
-| Resolving the OIDC client with the same identity key | Returns the cached instance. |
-| Reinitialization of the framework's module (hot reload) | Cache is reset. |
+| Trigger                                                 | Effect                                                                   |
+| ------------------------------------------------------- | ------------------------------------------------------------------------ |
+| Registering a factory (any value)                       | Clears the cached instance; clears the cached identity key.              |
+| Resolving the OIDC client with a new identity key       | Calls the active factory; replaces the cached instance and identity key. |
+| Resolving the OIDC client with the same identity key    | Returns the cached instance.                                             |
+| Reinitialization of the framework's module (hot reload) | Cache is reset.                                                          |
 
 When a consumer swaps user persistence to cross-tab storage via the factory, the framework's persisted-user reader still targets tab-scoped storage. Consumers in this case MUST NOT rely on the persisted-user reader for initial hydration; instead they should let the asynchronous user lookup at bootstrap resolve.

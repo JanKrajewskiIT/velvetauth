@@ -12,11 +12,11 @@ Storage MUST NOT contain personally identifiable information beyond what is alre
 
 ## Step 2 — Storage entries
 
-| Entry | Owner | Written on | Removed on | Contents |
-| --- | --- | --- | --- | --- |
-| Persisted user record | Underlying OIDC client (via tab-scoped storage) | Successful callback exchange, successful silent renew, OIDC client load | Successful sign-out; OIDC client unload event | Serialized user: tokens, profile, expiry, state. |
-| Return-URL fallback | Framework | Sign-in operation when a return URL is supplied and considered safe ([10-return-url-safety](10-return-url-safety.md)) | The callback handler, on first read | A normalized, in-app path. |
-| OIDC protocol state | Underlying OIDC client | During the sign-in redirect (PKCE / nonce / state) | During the callback handler | PKCE state, nonce, code verifier. The framework MUST NOT read or write these entries directly. |
+| Entry                 | Owner                                           | Written on                                                                                                            | Removed on                                    | Contents                                                                                       |
+| --------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Persisted user record | Underlying OIDC client (via tab-scoped storage) | Successful callback exchange, successful silent renew, OIDC client load                                               | Successful sign-out; OIDC client unload event | Serialized user: tokens, profile, expiry, state.                                               |
+| Return-URL fallback   | Framework                                       | Sign-in operation when a return URL is supplied and considered safe ([10-return-url-safety](10-return-url-safety.md)) | The callback handler, on first read           | A normalized, in-app path.                                                                     |
+| OIDC protocol state   | Underlying OIDC client                          | During the sign-in redirect (PKCE / nonce / state)                                                                    | During the callback handler                   | PKCE state, nonce, code verifier. The framework MUST NOT read or write these entries directly. |
 
 The user-record storage key MUST disambiguate by IdP authority and OIDC client identifier so that two configurations cannot collide. Default storage keys MUST be discoverable by name in the framework's source.
 

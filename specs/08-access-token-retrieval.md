@@ -12,14 +12,14 @@ The getter accepts the auth configuration as an argument so a single fetch wrapp
 
 ## Step 2 — Behavior matrix
 
-| User lookup outcome | Cached user expired | Renewal outcome | Resolved value |
-| --- | --- | --- | --- |
-| Times out | — | — | rejection propagates to caller |
-| Null-equivalent | — | — | "no token" |
-| User present | false | — | user's current access token |
-| User present | true | Resolves with a user carrying an access token | renewed access token |
-| User present | true | Resolves with a null-equivalent user | "no token" |
-| User present | true | Rejects (including via timeout) | "no token" |
+| User lookup outcome | Cached user expired | Renewal outcome                               | Resolved value                 |
+| ------------------- | ------------------- | --------------------------------------------- | ------------------------------ |
+| Times out           | —                   | —                                             | rejection propagates to caller |
+| Null-equivalent     | —                   | —                                             | "no token"                     |
+| User present        | false               | —                                             | user's current access token    |
+| User present        | true                | Resolves with a user carrying an access token | renewed access token           |
+| User present        | true                | Resolves with a null-equivalent user          | "no token"                     |
+| User present        | true                | Rejects (including via timeout)               | "no token"                     |
 
 The getter MUST resolve to "no token" when invoked outside a browser runtime. It MUST perform an OIDC client user lookup, bounded by the configured timeout; a timeout rejection MUST propagate to the caller.
 

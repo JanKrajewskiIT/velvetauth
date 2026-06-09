@@ -1,3 +1,2 @@
-hook_dir="$(cd -- "$(dirname -- "$0")" && pwd)"
-export PATH="$hook_dir/../node_modules/.bin:$PATH"
+hook_dir=$(dirname "$0")
 . "$hook_dir/../node_modules/@jankrajewskiit/configs/husky/pre-commit.sh"

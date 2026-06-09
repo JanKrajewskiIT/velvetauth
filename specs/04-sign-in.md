@@ -27,12 +27,12 @@ If the OIDC client redirect throws after a return URL has been persisted in the 
 
 The sign-in operation MUST accept an optional second argument carrying OIDC authorization-request parameters.
 
-| Field | Type | Forwarded as |
-| --- | --- | --- |
-| `acrValues` | string | OIDC `acr_values` |
-| `prompt` | string | OIDC `prompt` |
-| `loginHint` | string | OIDC `login_hint` |
-| `uiLocales` | string | OIDC `ui_locales` |
+| Field              | Type                 | Forwarded as                                                               |
+| ------------------ | -------------------- | -------------------------------------------------------------------------- |
+| `acrValues`        | string               | OIDC `acr_values`                                                          |
+| `prompt`           | string               | OIDC `prompt`                                                              |
+| `loginHint`        | string               | OIDC `login_hint`                                                          |
+| `uiLocales`        | string               | OIDC `ui_locales`                                                          |
 | `extraQueryParams` | string-to-string map | additional query parameters appended verbatim to the authorization request |
 
 Provided options MUST be forwarded verbatim to the underlying OIDC client's redirect call so they reach the IdP's `/authorize` request unaltered. The framework MUST NOT validate, normalize, or transform their values beyond what the underlying OIDC client requires.

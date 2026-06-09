@@ -4,18 +4,18 @@
 
 The framework accepts a consumer configuration record (suggested type name: `OidcAuthConfig`). Three fields are required; all others have defaults.
 
-| Field | Required | Default | Purpose |
-| --- | --- | --- | --- |
-| IdP authority URL | yes | — | OIDC issuer URL used for IdP discovery. |
-| OIDC client identifier | yes | — | Identifies the SPA at the IdP. |
-| SPA app URL | yes | — | Fallback for both redirect URI and post-logout redirect URI. |
-| Redirect URI | no | App URL | URL the IdP redirects to after sign-in. Its path is what callback detection matches against. |
-| Post-logout redirect URI | no | App URL | URL the IdP redirects to after sign-out. |
-| Silent redirect URI | no | unset | Hidden iframe URL for silent renew. Required for automatic renewal end-to-end ([06-silent-renewal](06-silent-renewal.md)). |
-| Account console URL | no | Authority URL + `/account` | Surface-only; framework MUST NOT navigate to it. |
-| Async operation timeout | no | 8 s | Bounds every async OIDC call performed by the framework. |
-| Return-URL storage key | no | stable namespaced default | Key under which the return-URL fallback is persisted in browser storage. |
-| OAuth scope string | no | `openid profile email` | Space-delimited scopes requested at the IdP. |
+| Field                    | Required | Default                    | Purpose                                                                                                                    |
+| ------------------------ | -------- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| IdP authority URL        | yes      | —                          | OIDC issuer URL used for IdP discovery.                                                                                    |
+| OIDC client identifier   | yes      | —                          | Identifies the SPA at the IdP.                                                                                             |
+| SPA app URL              | yes      | —                          | Fallback for both redirect URI and post-logout redirect URI.                                                               |
+| Redirect URI             | no       | App URL                    | URL the IdP redirects to after sign-in. Its path is what callback detection matches against.                               |
+| Post-logout redirect URI | no       | App URL                    | URL the IdP redirects to after sign-out.                                                                                   |
+| Silent redirect URI      | no       | unset                      | Hidden iframe URL for silent renew. Required for automatic renewal end-to-end ([06-silent-renewal](06-silent-renewal.md)). |
+| Account console URL      | no       | Authority URL + `/account` | Surface-only; framework MUST NOT navigate to it.                                                                           |
+| Async operation timeout  | no       | 8 s                        | Bounds every async OIDC call performed by the framework.                                                                   |
+| Return-URL storage key   | no       | stable namespaced default  | Key under which the return-URL fallback is persisted in browser storage.                                                   |
+| OAuth scope string       | no       | `openid profile email`     | Space-delimited scopes requested at the IdP.                                                                               |
 
 The framework MUST expose accessor functions (or equivalent) to read every defaulted value with its fallback applied, so that other parts of the framework and consumers can resolve the effective configuration without re-implementing the defaulting logic. Default values MUST be defined as discoverable constants.
 

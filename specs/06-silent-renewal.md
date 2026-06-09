@@ -20,7 +20,9 @@ A manual silent-renewal operation MUST exist on the auth context (suggested name
 
 The manual operation MUST be a no-op in a non-browser runtime. It MUST invoke the OIDC client's silent sign-in, bounded by the configured timeout. The manual operation MUST NOT throw to the caller — failures surface via the error accessor.
 
-On success, the framework MUST commit "user present, not loading, no error". On failure, the framework MUST update only the error surface and the loading flag; user state MUST remain as it was. This ensures transient renewal failures do not flip the UI when the existing token is still valid.
+The framework MUST set the loading flag to `true` before invoking the OIDC client and reset it to `false` upon completion regardless of outcome.
+
+On success (OIDC client returns a non-null `User`), the framework MUST commit "user present, not loading, no error". When the OIDC client returns `null` without throwing (early-bailout path in the underlying library), the framework MUST treat this identically to a failure: reset the loading flag, clear the error surface, and leave the user accessor unchanged. On failure (throws), the framework MUST update only the error surface and the loading flag; user state MUST remain as it was. This ensures transient renewal failures do not flip the UI when the existing token is still valid.
 
 ## Step 3 — Renewal failure isolation
 
