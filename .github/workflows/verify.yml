@@ -19,7 +19,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
         env:
-          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
 
       - name: Audit
         run: npm audit --audit-level=high
