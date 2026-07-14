@@ -55,7 +55,7 @@
     "solid-js": ">=1.9"
   },
   "devDependencies": {
-    "@arethetypeswrong/cli": "^0.18.3",
+    "@arethetypeswrong/cli": "^0.18.5",
     "@jankrajewskiit/configs": "^2.0.4",
     "eslint": "^10.4.1",
     "husky": "^9.1.7",
