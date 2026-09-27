@@ -1,28 +1,37 @@
-name: verify
+name: Verify
 
 on:
   workflow_call:
 
+permissions:
+  contents: read
+  packages: read
+
 jobs:
-  verify:
+  audit:
+    name: audit
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Setup Node
-        uses: actions/setup-node@v6
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
           cache: npm
-
-      - name: Install dependencies
-        run: npm ci
+      - run: npm ci
         env:
-          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: npm audit --audit-level=high
 
-      - name: Audit
-        run: npm audit --audit-level=high
-
-      - name: Verify
-        run: npm run verify
+  verify:
+    name: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: npm run verify

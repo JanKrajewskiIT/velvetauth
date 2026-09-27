@@ -1,4 +1,4 @@
-name: publish
+name: Publish
 
 on:
   push:
@@ -6,56 +6,59 @@ on:
       - 'v*'
 
 concurrency:
-  group: publish-${{ github.ref }}
+  group: release-${{ github.ref_name }}
   cancel-in-progress: false
+
+permissions:
+  contents: read
 
 jobs:
   verify:
     uses: ./.github/workflows/verify.yml
     secrets: inherit
+    permissions:
+      contents: read
+      packages: read
 
   check-version:
-    runs-on: ubuntu-latest
     needs: verify
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Compare tag to package version
+      - uses: actions/checkout@v6
+      - name: Compare tag and package version
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          TAG_VERSION="${GITHUB_REF_NAME#v}"
-          PKG_VERSION="$(node -p "require('./package.json').version")"
-          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
-            echo "Tag version ($TAG_VERSION) does not match package.json version ($PKG_VERSION)."
+          tag_version="${RELEASE_TAG#v}"
+          package_version="$(node -p "require('./package.json').version")"
+          if [[ ! "$tag_version" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$ ]]; then
+            echo "Release tag must be v<semver>: $RELEASE_TAG"
+            exit 1
+          fi
+          if [[ "$tag_version" != "$package_version" ]]; then
+            echo "Release tag $RELEASE_TAG does not match package version $package_version"
             exit 1
           fi
 
   publish:
+    needs:
+      - verify
+      - check-version
     runs-on: ubuntu-latest
-    needs: check-version
     permissions:
       contents: read
       id-token: write
+      packages: write
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Setup Node
-        uses: actions/setup-node@v6
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
-          cache: npm
           registry-url: https://npm.pkg.github.com
-
-      - name: Install dependencies
-        run: npm ci
+      - run: npm ci
         env:
-          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
-
-      - name: Build
-        run: npm run build
-
-      - name: Publish
-        run: npm publish --provenance --access public
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: npm publish --provenance --access public
         env:
-          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

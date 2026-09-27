@@ -8,7 +8,7 @@ Registering a factory MUST cause the next OIDC client resolution to invoke that 
 
 The registration operation MUST be a synchronous side effect (no async, no IO). The factory MUST be a singleton — repeated registrations overwrite previous ones; there is no factory stack. The framework MUST NOT invoke any registered factory at module load — only lazily on first resolution.
 
-The factory MUST be invoked exactly once per configuration identity (memoized by the OIDC client cache). Failure inside the factory MUST propagate to the caller of the OIDC client resolution. The framework MUST NOT retry on factory failure.
+The factory MUST be invoked exactly once per configuration identity while that identity remains cached. The cache MUST retain one client per identity for the lifetime of the module; resolving another identity MUST NOT evict an earlier identity. Failure inside the factory MUST propagate to the caller of OIDC client resolution. The framework MUST NOT retry on factory failure. Public operations map this failure according to [11-error-model](11-error-model.md).
 
 Common use cases for the factory:
 

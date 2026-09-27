@@ -8,6 +8,8 @@ The framework owns one logical storage entry of its own: the return-URL fallback
 
 All storage reads and writes MUST be guarded against non-browser runtimes and MUST become no-ops outside a browser. Reading the persisted user MUST be synchronous, MUST return a null-equivalent value when the entry is missing or unparseable, and MUST NOT throw.
 
+An unavailable browser storage API is a non-browser runtime. In a browser runtime, a persisted-user read failure MUST return null-equivalent state. A return-URL fallback write failure MUST stop sign-in before redirect and surface as an operation error. A return-URL fallback removal failure during callback MUST be reported as a callback error; the value MUST NOT be used, and callback URL cleanup MUST still occur. Failure to remove a persisted-user entry while applying a cross-tab sign-out MUST be swallowed so the tab still transitions to unauthenticated state.
+
 Storage MUST NOT contain personally identifiable information beyond what is already encoded in the OIDC user profile. Stored values MUST survive a tab reload but MUST NOT survive a tab close under the default storage backend.
 
 ## Step 2 — Storage entries
@@ -34,5 +36,7 @@ The framework MUST maintain the following lifecycle invariants:
 6. **On tab close**, all framework-owned storage is wiped by the browser under the default storage backend.
 
 The return-URL entry MUST be removed when the OIDC callback is processed, regardless of whether a redirect ultimately occurs.
+
+If return-URL fallback removal fails during callback, the callback MUST continue without using that fallback. A successfully exchanged OIDC user remains authenticated; the cleanup failure is surfaced through the inline error accessor or by rejecting the standalone handler. The URL query MUST still be cleaned, and navigation MAY use only a safe state-carried URL or the SPA root.
 
 When storage quota is exceeded, writes throw synchronously inside the OIDC client; the error surfaces via the operation's promise rejection through the documented error surface. When storage is disabled (third-party context, privacy mode), the framework treats this as a non-browser runtime: storage operations no-op and the framework remains in an unauthenticated state.

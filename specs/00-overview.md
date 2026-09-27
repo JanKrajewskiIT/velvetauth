@@ -86,7 +86,7 @@ For the defaults to function end-to-end the IdP client MUST be configured with:
 
 ## Framework-wide requirements
 
-No asynchronous OIDC operation invoked by the framework MAY hang indefinitely — every such operation MUST be bounded by a consumer-configurable timeout with a sensible default.
+No asynchronous OIDC operation invoked by the framework MAY make its caller wait indefinitely — every such operation MUST be bounded by a consumer-configurable timeout with a sensible default, including redirect operations. A timeout bounds only the framework's wait; it does not cancel an operation already started in `oidc-client-ts`, and a late side effect such as navigation may still occur.
 
 The framework MUST NOT throw during render in non-browser contexts. Rendering MUST degrade to an unauthenticated context.
 
@@ -108,6 +108,6 @@ Specs are numbered in dependency order. Earlier specs define foundational contra
 
 ## Source evidence and handoff status
 
-These files define the proposed clean-room target; they are not proof that the current package implements every MUST requirement. Executable evidence is in `src/`, `package.json`, the root configuration files, and `.github/`. Where that evidence disagrees with a spec, the disagreement and its status are recorded in [15-source-reconciliation](15-source-reconciliation.md). `SOURCE` identifies observed repository behavior, `AGENT` identifies an unapproved recommendation, and `ASSUMPTION` identifies an unresolved input.
+These files define the clean-room target; they are not proof that any previous package implements every MUST requirement. This clean-room handoff does not use the previous implementation as evidence. `USER` identifies a user-approved decision, `AGENT` identifies an unapproved recommendation, and `ASSUMPTION` identifies an unresolved input.
 
-The handoff is **not frozen** while any `OPEN` decision in the reconciliation register could change public, security, persistence, or operational behavior. After those decisions are approved and incorporated, the resolved specs become the sole implementation brief. A replacement implementation should preserve the approved observable contract, not the current private file layout or algorithms, and should not consult the old source unless the user explicitly reopens it.
+The clean-room brief is frozen as `specs/00-15 v1.2` after the decisions recorded in [15-source-reconciliation](15-source-reconciliation.md). Package and repository metadata values listed in Spec 14 remain required setup inputs before package publication wiring is finalized. Implementation MUST preserve the approved observable contract and MUST NOT consult the previous source, its diffs, screenshots, or implementation-specific documentation unless the user explicitly reopens that evidence.

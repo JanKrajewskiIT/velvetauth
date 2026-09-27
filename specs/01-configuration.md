@@ -29,6 +29,8 @@ The configuration record SHOULD be treated as immutable after the provider mount
 
 The framework MUST derive a stable identity key from a subset of configuration fields. Two configurations with the same identity key MUST yield the same OIDC client; configurations that differ in any identity-bearing field MUST yield a new client.
 
+The client identifier MUST NOT contain `:`. Configuration resolution and `buildStoredUserStorageKey` MUST reject a client identifier containing this character with a descriptive error. This restriction keeps the canonical `oidc-client-ts` user-storage key unambiguous without changing its format.
+
 Fields that are part of the identity:
 
 - IdP authority URL
@@ -49,7 +51,7 @@ Changing the IdP authority, client identifier, or requested scopes rebuilds the 
 
 Re-passing a structurally equivalent configuration record (new object, same field values) MUST NOT rebuild the OIDC client. Identity is content-based.
 
-The framework MUST encode the identity tuple with an unambiguous, content-disjoint separator. Concatenation without a separator (or with a separator that may appear inside a field) is forbidden because it permits collisions where two distinct tuples produce the same key.
+The framework MUST encode the identity tuple without collisions. JSON serialization of the ordered tuple of resolved identity-bearing values is the canonical encoding; delimiter concatenation is forbidden.
 
 ## Step 4 — OIDC client construction defaults
 

@@ -39,6 +39,6 @@ Callback detection is path- and query-shape-based. It does NOT compare the URL's
 
 The standalone callback handler (suggested name: `handleAuthRedirectCallback`) MUST resolve to "did not navigate" when invoked outside a browser runtime or when the current URL is not a callback.
 
-When the current URL is a callback, the handler MUST follow the same exchange and return-URL resolution algorithm as inline mode. The handler MUST return a boolean indicating whether a full navigation was issued, so the caller can render an idle placeholder vs. a "redirecting" placeholder.
+When the current URL is a callback, the handler MUST follow the same exchange and return-URL resolution algorithm as inline mode. It MUST return a boolean indicating whether a full navigation was issued, so the caller can render an idle placeholder vs. a "redirecting" placeholder. Callback exchange, OIDC client resolution, or required fallback-cleanup failures MUST reject the returned promise after URL cleanup; `false` is reserved for non-browser runtime or a URL that is not a callback.
 
 Consumers MUST pick exactly one integration mode — inline or standalone. Using both simultaneously causes one of the two to receive a "code already consumed" error from the OIDC client.

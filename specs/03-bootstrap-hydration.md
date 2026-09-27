@@ -20,7 +20,7 @@ The asynchronous bootstrap MUST honor a disposed flag set in cleanup: setters MU
 
 ## Step 3 — Event subscriptions
 
-On mount in a browser runtime, the provider MUST subscribe to the OIDC client's `userLoaded`, `userUnloaded`, `silentRenewError`, and `accessTokenExpired` events.
+On mount in a browser runtime, the provider MUST subscribe to the OIDC client's `userLoaded`, `userUnloaded`, `silentRenewError`, and `accessTokenExpired` events on the client resolved for the configuration identity captured at mount.
 
 - A `userLoaded` event MUST set state to "user present, not loading, error null".
 - A `userUnloaded` event MUST set state to "no user, not loading, error null".
@@ -29,7 +29,7 @@ On mount in a browser runtime, the provider MUST subscribe to the OIDC client's 
 
 On unmount, every subscription MUST be removed. No event handler may run after unmount. A handler that races with disposal (fires after unmount has begun) MUST NOT commit reactive state, MUST NOT publish cross-tab notifications, and MUST NOT initiate navigation. The framework guards these effects with a disposed flag set in cleanup.
 
-Event subscriptions MUST persist across re-renders of the configuration. If the provider's configuration changes, subscriptions MUST track the currently active OIDC client. Event handler references MUST be stable for the lifetime of the subscription so cleanup symmetrically removes them.
+Event subscriptions MUST persist across re-renders that preserve the configuration identity. They MUST NOT be rebound when identity-bearing configuration changes; changing identity-bearing fields is a require-remount scenario as defined below. Event handler references MUST be stable for the lifetime of the subscription so cleanup symmetrically removes them.
 
 ## Step 4 — Reactive context surface
 
@@ -55,7 +55,7 @@ The hook MUST throw a descriptive error when called outside the provider's subtr
 
 Non-identity fields (account console URL, timeout, return-URL storage key) are reactive and take effect immediately when the configuration prop changes.
 
-Identity-bearing fields (authority, client identifier, redirect URIs, scope) rebuild the OIDC client on next access when changed. The previously bound event subscriptions stay attached to the old client and effectively go silent. This MUST be documented as a **require-remount scenario**: consumers changing identity-bearing fields MUST unmount and remount the provider to pick up the new OIDC client and fresh subscriptions.
+Identity-bearing fields (authority, client identifier, redirect URIs, scope) select a different cached OIDC client on next access when changed. The provider's existing subscriptions stay attached to the client captured at mount. This MUST be documented as a **require-remount scenario**: consumers changing identity-bearing fields MUST unmount and remount the provider to pick up the new OIDC client and fresh subscriptions.
 
 A switch of authority between mounts changes the user-record storage key; the new mount hydrates from the new key (typically empty). The stale entry from the old key is left behind in storage and is wiped on tab close.
 

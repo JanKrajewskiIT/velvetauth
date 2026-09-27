@@ -27,7 +27,7 @@ updates:
       typescript:
         patterns:
           - typescript*
-      jankrajewskiit:
+      shared-configs:
         patterns:
           - '@jankrajewskiit/*'
       solid:
@@ -36,7 +36,6 @@ updates:
       oidc:
         patterns:
           - oidc-client-ts*
-
   - package-ecosystem: github-actions
     directory: /
     schedule:

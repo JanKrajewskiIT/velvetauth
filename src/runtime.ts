@@ -1,23 +1,24 @@
-export function isBrowserRuntime(): boolean {
+export const isBrowserRuntime = (): boolean => {
+  if (typeof window === 'undefined') return false;
   try {
-    return typeof window !== 'undefined' && typeof window.sessionStorage !== 'undefined';
+    const storage = window.sessionStorage;
+    return Boolean(storage);
   } catch {
     return false;
   }
-}
+};
 
-export function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> {
-  return new Promise<T>((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error(message)), timeoutMs);
+export const withTimeout = <T>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> =>
+  new Promise<T>((resolve, reject) => {
+    const timeoutId = setTimeout(() => reject(new Error(message)), timeoutMs);
     promise.then(
       (value) => {
-        clearTimeout(timer);
+        clearTimeout(timeoutId);
         resolve(value);
       },
       (error: unknown) => {
-        clearTimeout(timer);
+        clearTimeout(timeoutId);
         reject(error instanceof Error ? error : new Error(String(error)));
       },
     );
   });
-}

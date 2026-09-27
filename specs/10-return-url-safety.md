@@ -9,7 +9,8 @@ A return-URL normalizer (`normalizeReturnUrl`) MUST exist that takes an arbitrar
 - Returns the SPA root when the input is a falsy value.
 - Returns the SPA root when the input does not begin with a forward slash.
 - Returns the SPA root when the input begins with two forward slashes (protocol-relative).
-- Otherwise returns the input unchanged.
+- Returns the SPA root when the input contains a backslash or ASCII control character.
+- Otherwise returns the input unchanged only when URL parsing against a fixed same-origin base produces the same origin; malformed or cross-origin results return the SPA root.
 
 The normalizer MUST be pure — no DOM access, no storage access. Normalization MUST execute before persistence; storage MUST NEVER contain an unsafe value.
 
@@ -57,4 +58,4 @@ The framework's return-URL handling governs post-callback navigation only. It do
 
 If a consumer's own client-side router acts on query parameters that affect navigation, the consumer MUST sanitize those independently. The return-URL normalizer governs only what the framework navigates to.
 
-Paths with `..` or encoded slashes are not flattened — passed through unchanged. The browser resolves them at navigation time; the result remains on-origin.
+Paths with `..` or encoded slashes are not flattened. They may be passed through unchanged only when URL parsing confirms the resolved target remains on-origin.

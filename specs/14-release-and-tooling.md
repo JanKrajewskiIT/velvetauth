@@ -41,6 +41,10 @@ The framework's `package.json` MUST declare at minimum:
 
 The framework MUST depend on `@jankrajewskiit/configs` at `^2.0.2` (2.x major; never 1.x). The 1.x line MUST NOT be used — it has incompatible peer-dependency floors and divergent factory shapes.
 
+## Release metadata inputs
+
+The approved implementation brief does not provide the package name, source repository URL, publish registry URL, or agent-guideline upstream repository URL. These exact values MUST be supplied before package-manifest and release-workflow wiring is finalized. They MUST NOT be guessed or published as placeholders. Local source implementation may proceed without them.
+
 The framework MUST consume its lint, format, style-lint, TypeScript, Vite, lint-staged, and Husky presets exclusively from the published subpath exports of `@jankrajewskiit/configs`. The framework MUST NOT vendor, fork, or re-implement those presets locally.
 
 | Subpath                                    | Where wired                           | What the framework relies on                                                       |

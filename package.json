@@ -1,6 +1,6 @@
 {
   "name": "@jankrajewskiit/auth",
-  "version": "2.0.1",
+  "version": "3.0.0",
   "type": "module",
   "license": "MIT",
   "description": "SolidJS browser-side OIDC authentication framework wrapping oidc-client-ts.",
@@ -45,7 +45,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "build": "vite build",
+    "build": "vite build && node scripts/copy-changelog.mjs",
     "verify": "npm run typecheck && npm run lint && npm run build && publint && attw --pack --profile esm-only --ignore-rules internal-resolution-error",
     "prepublishOnly": "npm run verify",
     "prepare": "husky"
@@ -57,6 +57,7 @@
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",
     "@jankrajewskiit/configs": "^2.0.6",
+    "@typescript/native": "npm:typescript@^7.0.2",
     "eslint": "^10.11.0",
     "husky": "^9.1.7",
     "lint-staged": "^17.6.0",
@@ -64,7 +65,7 @@
     "prettier": "^3.9.9",
     "publint": "^0.3.24",
     "solid-js": "^1.9.15",
-    "typescript": "^7.0.2",
+    "typescript": "npm:@typescript/typescript6@^6.0.2",
     "vite": "^8.3.1"
   }
 }

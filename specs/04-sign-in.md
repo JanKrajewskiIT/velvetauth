@@ -4,7 +4,7 @@
 
 The sign-in operation MUST be a no-op when invoked outside a browser runtime; it MUST resolve without throwing.
 
-The operation MUST NOT throw synchronously for any input. Errors raised by the OIDC client redirect MUST be captured and surfaced via the error accessor. The sign-in operation MUST resolve (no exception propagation to the caller). The operation MUST NOT clear the user accessor or the loading flag on error — only the error surface is mutated.
+The operation MUST NOT throw synchronously for any input. Errors raised by OIDC client resolution, return-URL storage, or the OIDC client redirect MUST be captured and surfaced via the error accessor. The sign-in operation MUST resolve (no exception propagation to the caller). The operation MUST NOT clear the user accessor or the loading flag on error — only the error surface is mutated. The redirect call MUST be bounded by the configured timeout; a timeout does not cancel it, and a later redirect side effect may still occur.
 
 The operation MUST be idempotent at the intent level — rapid double-invocation MUST NOT corrupt state. The underlying OIDC client handles single-flight redirect issuance.
 
@@ -21,7 +21,7 @@ When a safe return URL exists after normalization and loop checking, it MUST be 
 
 The return URL persisted in storage MUST always be a safe in-app path; unsafe values MUST never reach storage.
 
-If the OIDC client redirect throws after a return URL has been persisted in the same operation, the framework MUST remove that storage entry before surfacing the error. This prevents a stranded entry from being consumed by an unrelated subsequent callback. A return URL persisted by an earlier successful redirect that is still pending its callback MUST NOT be removed by this rule.
+If OIDC client resolution or redirect fails, including by timeout, after a return URL has been persisted in the same operation, the framework MUST remove that storage entry before surfacing the error. This prevents a stranded entry from being consumed by an unrelated subsequent callback. A return URL persisted by an earlier successful redirect that is still pending its callback MUST NOT be removed by this rule. If redirect timeout occurs, the redirect operation remains uncancelled and may still navigate later.
 
 ## Step 3 — Authorization-request options
 

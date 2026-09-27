@@ -1,86 +1,53 @@
 import { isBrowserRuntime } from './runtime';
 
-const PLACEHOLDER_ORIGIN = 'http://localhost';
+const PLACEHOLDER_ORIGIN = 'https://velvet-auth.invalid';
 
-function resolveOrigin(origin?: string): string {
-  if (origin) {
-    return origin;
-  }
-  if (isBrowserRuntime()) {
-    return window.location.origin;
-  }
-  return PLACEHOLDER_ORIGIN;
-}
+const hasControlCharacter = (value: string): boolean =>
+  Array.from(value).some((character) => {
+    const codePoint = character.codePointAt(0);
+    return codePoint !== undefined && (codePoint < 0x20 || codePoint === 0x7f);
+  });
 
-function stripTrailingSlash(pathname: string): string {
-  if (pathname.length > 1 && pathname.endsWith('/')) {
-    return pathname.slice(0, -1);
-  }
-  return pathname;
-}
+export const normalizeReturnUrl = (value: string | undefined): string => {
+  if (!value || !value.startsWith('/') || value.startsWith('//')) return '/';
+  if (value.includes('\\') || hasControlCharacter(value)) return '/';
 
-export function normalizeReturnUrl(value: string | undefined | null): string {
-  if (!value) {
-    return '/';
-  }
-  if (!value.startsWith('/')) {
-    return '/';
-  }
-  if (value.startsWith('//')) {
-    return '/';
-  }
-  return value;
-}
-
-export function isOidcCallbackReturnUrl(value: string | undefined, appUrl: string, origin?: string): boolean {
-  if (!value) {
-    return false;
-  }
-
-  const baseOrigin = resolveOrigin(origin);
-
-  let url: URL;
-  let redirect: URL;
   try {
-    url = new URL(value, baseOrigin);
-    redirect = new URL(appUrl, baseOrigin);
+    const resolved = new URL(value, PLACEHOLDER_ORIGIN);
+    return resolved.origin === PLACEHOLDER_ORIGIN ? value : '/';
+  } catch {
+    return '/';
+  }
+};
+
+export const isOidcCallbackReturnUrl = (value: string | undefined, appUrl: string, origin?: string): boolean => {
+  if (!value) return false;
+  const baseOrigin = origin ?? (isBrowserRuntime() ? window.location.origin : PLACEHOLDER_ORIGIN);
+
+  try {
+    const callbackPath = new URL(appUrl, baseOrigin).pathname.replace(/\/$/u, '') || '/';
+    const candidate = new URL(value, baseOrigin);
+    const candidatePath = candidate.pathname.replace(/\/$/u, '') || '/';
+    const hasResponse = candidate.searchParams.has('code') || candidate.searchParams.has('error');
+    const hasCorrelation =
+      candidate.searchParams.has('state') ||
+      candidate.searchParams.has('session_state') ||
+      candidate.searchParams.has('iss');
+    return callbackPath === candidatePath && hasResponse && hasCorrelation;
   } catch {
     return false;
   }
+};
 
-  if (stripTrailingSlash(url.pathname) !== stripTrailingSlash(redirect.pathname)) {
-    return false;
-  }
+export const getCurrentReturnUrl = (): string => {
+  if (!isBrowserRuntime()) return '/';
+  return `${window.location.pathname}${window.location.search}${window.location.hash}`;
+};
 
-  const params = url.searchParams;
-  const hasOutcome = params.has('code') || params.has('error');
-  const hasState = params.has('state') || params.has('session_state') || params.has('iss');
-
-  return hasOutcome && hasState;
-}
-
-export function getCurrentReturnUrl(): string {
-  if (!isBrowserRuntime()) {
-    return '/';
-  }
-  const { pathname, search, hash } = window.location;
-  return `${pathname}${search}${hash}`;
-}
-
-export function resolveCallbackReturnUrl(state: unknown, appUrl: string): string | undefined {
-  if (!state || typeof state !== 'object') {
-    return undefined;
-  }
-
-  const returnUrl = (state as { returnUrl?: unknown }).returnUrl;
-  if (typeof returnUrl !== 'string') {
-    return undefined;
-  }
-
-  const normalized = normalizeReturnUrl(returnUrl);
-  if (isOidcCallbackReturnUrl(normalized, appUrl)) {
-    return undefined;
-  }
-
-  return normalized;
-}
+export const resolveCallbackReturnUrl = (state: unknown, appUrl: string, origin?: string): string | undefined => {
+  if (typeof state !== 'object' || state === null || !('returnUrl' in state)) return undefined;
+  const value = state.returnUrl;
+  if (typeof value !== 'string') return undefined;
+  const normalized = normalizeReturnUrl(value);
+  return isOidcCallbackReturnUrl(normalized, appUrl, origin) ? undefined : normalized;
+};

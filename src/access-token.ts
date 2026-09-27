@@ -1,30 +1,43 @@
-import { getTimeoutMs, type OidcAuthConfig } from './config';
-import { ACCESS_TOKEN_LOOKUP_TIMEOUT_MESSAGE, SILENT_RENEW_TIMEOUT_MESSAGE } from './constants';
+import { getConfigIdentity, getTimeoutMs } from './config';
+import { clearPersistedUserAfterRemoteSignOut, getSignOutGeneration, subscribeToSignOut } from './cross-tab';
+import { beginManagedRenewal } from './renewal-state';
 import { isBrowserRuntime, withTimeout } from './runtime';
-import { resolveUserManager } from './user-manager';
+import type { OidcAuthConfig } from './types';
+import { getAuthUserManager } from './user-manager';
 
-export async function getAuthAccessToken(config: OidcAuthConfig): Promise<string | undefined> {
-  if (!isBrowserRuntime()) {
-    return undefined;
-  }
+export const getAuthAccessToken = async (config: OidcAuthConfig): Promise<string | undefined> => {
+  if (!isBrowserRuntime()) return undefined;
 
-  const manager = resolveUserManager(config);
-  const timeoutMs = getTimeoutMs(config);
-
-  const user = await withTimeout(manager.getUser(), timeoutMs, ACCESS_TOKEN_LOOKUP_TIMEOUT_MESSAGE);
-
-  if (!user) {
-    return undefined;
-  }
-
-  if (!user.expired) {
-    return user.access_token;
-  }
+  const generation = getSignOutGeneration(config.authority, config.clientId);
+  const unsubscribe = subscribeToSignOut(config.authority, config.clientId, () => {
+    clearPersistedUserAfterRemoteSignOut(config.authority, config.clientId);
+  });
 
   try {
-    const renewed = await withTimeout(manager.signinSilent(), timeoutMs, SILENT_RENEW_TIMEOUT_MESSAGE);
-    return renewed?.access_token ?? undefined;
-  } catch {
-    return undefined;
+    if (generation !== getSignOutGeneration(config.authority, config.clientId)) return undefined;
+    const manager = getAuthUserManager(config);
+    const user = await withTimeout(manager.getUser(), getTimeoutMs(config), 'Access-token user lookup timed out.');
+    if (generation !== getSignOutGeneration(config.authority, config.clientId)) return undefined;
+    if (!user) return undefined;
+    if (!user.expired) return user.access_token || undefined;
+
+    try {
+      const finishExternalRenewal = beginManagedRenewal(getConfigIdentity(config));
+      let renewal: ReturnType<typeof manager.signinSilent>;
+      try {
+        renewal = manager.signinSilent();
+      } catch (error: unknown) {
+        finishExternalRenewal();
+        throw error;
+      }
+      renewal.then(finishExternalRenewal, finishExternalRenewal);
+      const renewedUser = await withTimeout(renewal, getTimeoutMs(config), 'Silent renewal timed out.');
+      if (generation !== getSignOutGeneration(config.authority, config.clientId)) return undefined;
+      return renewedUser?.access_token || undefined;
+    } catch {
+      return undefined;
+    }
+  } finally {
+    unsubscribe();
   }
-}
+};

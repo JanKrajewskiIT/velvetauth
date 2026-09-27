@@ -4,3 +4,9 @@ dist-ssr/
 *.local
 .env*
 AGENTS.md
+.husky/_/
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.swo

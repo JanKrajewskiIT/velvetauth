@@ -1,73 +1,24 @@
-import type { SigninRedirectArgs, User } from 'oidc-client-ts';
-import {
-  type Accessor,
-  type Component,
-  createContext,
-  createMemo,
-  createSignal,
-  type JSX,
-  onCleanup,
-  onMount,
-  untrack,
-  useContext,
-} from 'solid-js';
+import type { User } from 'oidc-client-ts';
+import type { SigninRedirectArgs } from 'oidc-client-ts';
+import { batch, createContext, createMemo, createSignal, onCleanup, onMount, untrack, useContext } from 'solid-js';
 
-import { exchangeCallback } from './callback';
-import { getAccountUrl, getRedirectUri, getReturnUrlStorageKey, getTimeoutMs, type OidcAuthConfig } from './config';
+import { cleanupFailedAuthCallback, processAuthRedirectCallback } from './callback';
+import { getAccountUrl, getConfigIdentity, getReturnUrlStorageKey, getTimeoutMs } from './config';
 import {
-  ADMIN_ROLE,
-  HOOK_OUTSIDE_PROVIDER_MESSAGE,
-  INITIALIZATION_TIMEOUT_MESSAGE,
-  MODERATOR_ROLE,
-  SILENT_RENEW_TIMEOUT_MESSAGE,
-} from './constants';
-import { formatSilentRenewError, messageOf } from './errors';
-import { extractRolesFromAccessToken, matchesAnyRole, matchesRole } from './jwt';
-import { getCurrentReturnUrl, isOidcCallbackReturnUrl, normalizeReturnUrl } from './return-url';
+  clearPersistedUserAfterRemoteSignOut,
+  getSignOutGeneration,
+  publishSignOut,
+  subscribeToSignOut,
+} from './cross-tab';
+import { getInteractionErrorMessage, getSafeErrorMessage } from './errors';
+import { extractRolesFromAccessToken, matchesAnyRole, matchesRole } from './identity';
+import { subscribeToManagerEvents } from './manager-events';
+import { beginManagedRenewal, hasManagedRenewal } from './renewal-state';
+import { isOidcCallbackReturnUrl, normalizeReturnUrl } from './return-url';
 import { isBrowserRuntime, withTimeout } from './runtime';
-import {
-  buildBroadcastChannelName,
-  getStoredUser,
-  removeReturnUrlFallback,
-  removeStoredUser,
-  writeReturnUrlFallback,
-} from './storage';
-import { resolveUserManager } from './user-manager';
-
-export interface SignInOptions {
-  acrValues?: string;
-  prompt?: string;
-  loginHint?: string;
-  uiLocales?: string;
-  extraQueryParams?: Record<string, string>;
-}
-
-export interface AuthContextValue {
-  user: Accessor<User | null>;
-  isLoading: Accessor<boolean>;
-  isAuthenticated: Accessor<boolean>;
-  error: Accessor<string | null>;
-  accessToken: Accessor<string | undefined>;
-  roles: Accessor<string[]>;
-  firstName: Accessor<string>;
-  lastName: Accessor<string>;
-  email: Accessor<string>;
-  username: Accessor<string>;
-  accountUrl: Accessor<string>;
-  isAdmin: Accessor<boolean>;
-  isModerator: Accessor<boolean>;
-  isAdminOrModerator: Accessor<boolean>;
-  hasRole: (role: string) => boolean;
-  hasAnyRole: (...roles: string[]) => boolean;
-  signIn: (returnUrl?: string, options?: SignInOptions) => Promise<void>;
-  signOut: () => Promise<void>;
-  signInSilent: () => Promise<void>;
-}
-
-export interface AuthProviderProps {
-  config: OidcAuthConfig;
-  children?: JSX.Element;
-}
+import { getStoredUser, removeReturnUrl, writeReturnUrl } from './storage';
+import type { AuthContextValue, AuthProviderProps, AuthUserManager, OidcAuthConfig, SignInOptions } from './types';
+import { getAuthUserManager } from './user-manager';
 
 interface AuthState {
   user: User | null;
@@ -75,7 +26,8 @@ interface AuthState {
   error: string | null;
 }
 
-const RESERVED_QUERY_PARAMS = new Set([
+const AuthContext = createContext<AuthContextValue>();
+const RESERVED_QUERY_KEYS = new Set([
   'redirect_uri',
   'response_type',
   'client_id',
@@ -94,283 +46,163 @@ const RESERVED_QUERY_PARAMS = new Set([
   'ui_locales',
 ]);
 
-const AuthContext = createContext<AuthContextValue>();
+const firstString = (...values: unknown[]): string => {
+  const value = values.find((candidate) => typeof candidate === 'string' && candidate.length > 0);
+  return typeof value === 'string' ? value : '';
+};
 
-function isPresent(value: string | undefined): value is string {
-  return typeof value === 'string' && value.length > 0;
-}
+const getProfileValue = (user: User | null, ...keys: string[]): string => {
+  if (!user) return '';
+  return firstString(...keys.map((key) => user.profile[key]));
+};
 
-function firstNonEmpty(...values: unknown[]): string {
-  for (const value of values) {
-    if (typeof value === 'string' && value.length > 0) {
-      return value;
-    }
-  }
-  return '';
-}
+const sanitizeSignInOptions = (options?: SignInOptions): SigninRedirectArgs => {
+  if (!options) return {};
+  const args: SigninRedirectArgs = {};
+  if (options.acrValues) args.acr_values = options.acrValues;
+  if (options.prompt) args.prompt = options.prompt;
+  if (options.loginHint) args.login_hint = options.loginHint;
+  if (options.uiLocales) args.ui_locales = options.uiLocales;
 
-function buildSigninRequestArgs(options?: SignInOptions): Partial<SigninRedirectArgs> {
-  const args: Record<string, unknown> = {};
-  if (!options) {
-    return args;
-  }
-
-  if (isPresent(options.acrValues)) {
-    args.acr_values = options.acrValues;
-  }
-  if (isPresent(options.prompt)) {
-    args.prompt = options.prompt;
-  }
-  if (isPresent(options.loginHint)) {
-    args.login_hint = options.loginHint;
-  }
-  if (isPresent(options.uiLocales)) {
-    args.ui_locales = options.uiLocales;
-  }
-
-  if (options.extraQueryParams) {
-    const extra: Record<string, string> = {};
-    for (const [key, value] of Object.entries(options.extraQueryParams)) {
-      if (RESERVED_QUERY_PARAMS.has(key) || !isPresent(value)) {
-        continue;
-      }
-      extra[key] = value;
-    }
-    if (Object.keys(extra).length > 0) {
-      args.extraQueryParams = extra;
-    }
-  }
-
+  const extraQueryParams = Object.fromEntries(
+    Object.entries(options.extraQueryParams ?? {}).filter(
+      ([key, value]) => typeof value === 'string' && value !== '' && !RESERVED_QUERY_KEYS.has(key.toLowerCase()),
+    ),
+  );
+  if (Object.keys(extraQueryParams).length > 0) args.extraQueryParams = extraQueryParams;
   return args;
-}
+};
 
-export const AuthProvider: Component<AuthProviderProps> = (props) => {
+export const AuthProvider = (props: AuthProviderProps) => {
+  const initialConfig = untrack(() => ({ ...props.config }));
   const browser = isBrowserRuntime();
-  const mountAuthority = untrack(() => props.config.authority);
-  const mountClientId = untrack(() => props.config.clientId);
-  const mountRedirectUri = untrack(() => getRedirectUri(props.config));
-  const isCallback = browser && isOidcCallbackReturnUrl(getCurrentReturnUrl(), mountRedirectUri);
-
-  const [state, setState] = createSignal<AuthState>({
-    user: browser ? getStoredUser(mountAuthority, mountClientId) : null,
-    isLoading: isCallback,
-    error: null,
-  });
-
+  const callbackPath = initialConfig.redirectUri ?? initialConfig.appUrl;
+  const isCallback = browser && isOidcCallbackReturnUrl(window.location.href, callbackPath, window.location.origin);
+  const [state, setState] = createSignal<AuthState>(
+    {
+      user: browser ? getStoredUser(initialConfig.authority, initialConfig.clientId) : null,
+      isLoading: isCallback,
+      error: null,
+    },
+    { equals: false },
+  );
   let disposed = false;
-  let lifecycleEpoch = 0;
-  onCleanup(() => {
-    disposed = true;
-  });
+  let activeManualRenewals = 0;
 
+  const currentConfig = createMemo((): OidcAuthConfig => ({ ...props.config }));
   const user = createMemo(() => state().user);
   const isLoading = createMemo(() => state().isLoading);
   const error = createMemo(() => state().error);
-  const accessToken = createMemo(() => state().user?.access_token);
   const isAuthenticated = createMemo(() => {
-    const current = state().user;
-    return current != null && current.expired !== true;
+    const currentUser = user();
+    return currentUser !== null && !currentUser.expired;
   });
-  const roles = createMemo(() => extractRolesFromAccessToken(state().user?.access_token));
-
-  const firstName = createMemo(() => {
-    const profile = state().user?.profile;
-    return profile ? firstNonEmpty(profile.given_name, profile.first_name) : '';
-  });
-  const lastName = createMemo(() => {
-    const profile = state().user?.profile;
-    return profile ? firstNonEmpty(profile.family_name, profile.last_name) : '';
-  });
-  const email = createMemo(() => firstNonEmpty(state().user?.profile.email));
-  const username = createMemo(() => {
-    const profile = state().user?.profile;
-    return profile ? firstNonEmpty(profile.preferred_username, profile.name, profile.sub) : '';
-  });
-  const accountUrl = createMemo(() => getAccountUrl(props.config));
-
-  const isAdmin = createMemo(() => matchesRole(roles(), ADMIN_ROLE));
-  const isModerator = createMemo(() => matchesRole(roles(), MODERATOR_ROLE));
-  const isAdminOrModerator = createMemo(() => isAdmin() || isModerator());
-
+  const accessToken = createMemo(() => user()?.access_token);
+  const roles = createMemo(() => extractRolesFromAccessToken(accessToken()));
+  const firstName = createMemo(() => getProfileValue(user(), 'given_name', 'first_name'));
+  const lastName = createMemo(() => getProfileValue(user(), 'family_name', 'last_name'));
+  const email = createMemo(() => getProfileValue(user(), 'email'));
+  const username = createMemo(() => getProfileValue(user(), 'preferred_username', 'name', 'sub'));
+  const accountUrl = createMemo(() => getAccountUrl(currentConfig()));
   const hasRole = (role: string): boolean => matchesRole(roles(), role);
   const hasAnyRole = (...requiredRoles: string[]): boolean => matchesAnyRole(roles(), ...requiredRoles);
-
-  const applyUnauthenticated = (clearError: boolean): void => {
-    lifecycleEpoch += 1;
-    setState((previous) => ({
-      user: null,
-      isLoading: false,
-      error: clearError ? null : previous.error,
-    }));
-  };
+  const isAdmin = createMemo(() => hasRole('admin'));
+  const isModerator = createMemo(() => hasRole('moderator'));
+  const isAdminOrModerator = createMemo(() => hasRole('admin') || hasRole('moderator'));
 
   const signIn = async (returnUrl?: string, options?: SignInOptions): Promise<void> => {
-    if (!isBrowserRuntime()) {
-      return;
-    }
+    if (!isBrowserRuntime()) return;
+    const config = currentConfig();
+    const normalized = returnUrl === undefined ? undefined : normalizeReturnUrl(returnUrl);
+    const safeReturnUrl =
+      normalized && !isOidcCallbackReturnUrl(normalized, config.redirectUri ?? config.appUrl, window.location.origin)
+        ? normalized
+        : undefined;
+    let fallbackWritten = false;
 
-    const manager = resolveUserManager(props.config);
-    const storageKey = getReturnUrlStorageKey(props.config);
-    const redirectUri = getRedirectUri(props.config);
-
-    let safeReturnUrl: string | undefined;
-    if (returnUrl !== undefined) {
-      const normalized = normalizeReturnUrl(returnUrl);
-      if (!isOidcCallbackReturnUrl(normalized, redirectUri)) {
-        safeReturnUrl = normalized;
-      }
-    }
-
-    let persisted = false;
     try {
-      const args: SigninRedirectArgs = buildSigninRequestArgs(options);
+      const manager = getAuthUserManager(config);
       if (safeReturnUrl) {
-        writeReturnUrlFallback(storageKey, safeReturnUrl);
-        persisted = true;
-        args.state = { returnUrl: safeReturnUrl };
+        writeReturnUrl(getReturnUrlStorageKey(config), safeReturnUrl);
+        fallbackWritten = true;
       }
-      await manager.signinRedirect(args);
-    } catch (caught) {
-      if (persisted) {
-        removeReturnUrlFallback(storageKey);
+      await withTimeout(
+        manager.signinRedirect({
+          ...sanitizeSignInOptions(options),
+          ...(safeReturnUrl ? { state: { returnUrl: safeReturnUrl } } : {}),
+        }),
+        getTimeoutMs(config),
+        'Sign-in redirect timed out.',
+      );
+      if (!disposed) setState((previous) => ({ ...previous, error: null }));
+    } catch (caught: unknown) {
+      if (fallbackWritten) {
+        try {
+          removeReturnUrl(getReturnUrlStorageKey(config));
+        } catch {
+          // Preserve the redirect failure; the return URL was written by this operation.
+        }
       }
-      setState((previous) => ({ ...previous, error: messageOf(caught) }));
+      if (!disposed) setState((previous) => ({ ...previous, error: getSafeErrorMessage(caught) }));
     }
   };
 
   const signOut = async (): Promise<void> => {
-    if (!isBrowserRuntime()) {
-      return;
-    }
-    const manager = resolveUserManager(props.config);
+    if (!isBrowserRuntime()) return;
+    const config = currentConfig();
+    const hadUser = state().user !== null;
+    if (!hadUser) publishSignOut(config.authority, config.clientId);
     try {
-      await manager.signoutRedirect();
-    } catch (caught) {
-      setState((previous) => ({ ...previous, error: messageOf(caught) }));
+      const manager = getAuthUserManager(config);
+      await withTimeout(manager.signoutRedirect(), getTimeoutMs(config), 'Sign-out redirect timed out.');
+      if (!disposed) setState((previous) => ({ ...previous, error: null }));
+    } catch (caught: unknown) {
+      if (!disposed) setState((previous) => ({ ...previous, error: getSafeErrorMessage(caught) }));
     }
   };
 
   const signInSilent = async (): Promise<void> => {
-    if (!isBrowserRuntime()) {
-      return;
-    }
-    const manager = resolveUserManager(props.config);
-    const epoch = lifecycleEpoch;
+    if (!isBrowserRuntime()) return;
+    const config = currentConfig();
+    const generation = getSignOutGeneration(config.authority, config.clientId);
+    activeManualRenewals += 1;
     setState((previous) => ({ ...previous, isLoading: true }));
     try {
-      const renewed = await withTimeout(
-        manager.signinSilent(),
-        getTimeoutMs(props.config),
-        SILENT_RENEW_TIMEOUT_MESSAGE,
-      );
-      if (disposed || lifecycleEpoch !== epoch) {
-        return;
+      const manager = getAuthUserManager(config);
+      const finishManagedRenewal = beginManagedRenewal(getConfigIdentity(config));
+      let renewal: ReturnType<typeof manager.signinSilent>;
+      try {
+        renewal = manager.signinSilent();
+      } catch (caught: unknown) {
+        finishManagedRenewal();
+        throw caught;
       }
+      renewal.then(finishManagedRenewal, finishManagedRenewal);
+      const renewedUser = await withTimeout(renewal, getTimeoutMs(config), 'Silent renewal timed out.');
+      if (disposed || generation !== getSignOutGeneration(config.authority, config.clientId)) return;
       setState((previous) => ({
-        user: renewed ?? previous.user,
-        isLoading: false,
+        ...previous,
+        ...(renewedUser ? { user: renewedUser } : {}),
+        isLoading: activeManualRenewals > 1,
         error: null,
       }));
-    } catch (caught) {
-      if (disposed || lifecycleEpoch !== epoch) {
-        return;
+    } catch (caught: unknown) {
+      if (!disposed && generation === getSignOutGeneration(config.authority, config.clientId)) {
+        setState((previous) => ({
+          ...previous,
+          isLoading: activeManualRenewals > 1,
+          error: getSafeErrorMessage(caught),
+        }));
       }
-      setState((previous) => ({ ...previous, isLoading: false, error: messageOf(caught) }));
+    } finally {
+      activeManualRenewals -= 1;
+      if (!disposed && generation === getSignOutGeneration(config.authority, config.clientId)) {
+        setState((previous) => ({ ...previous, isLoading: activeManualRenewals > 0 }));
+      }
     }
   };
 
-  onMount(() => {
-    if (!isBrowserRuntime()) {
-      return;
-    }
-
-    const manager = resolveUserManager(props.config);
-
-    const channelName = buildBroadcastChannelName(mountAuthority, mountClientId);
-    let channel: BroadcastChannel | null = null;
-    if (typeof BroadcastChannel !== 'undefined') {
-      channel = new BroadcastChannel(channelName);
-      channel.onmessage = (event: MessageEvent) => {
-        if (disposed) {
-          return;
-        }
-        if ((event.data as { kind?: unknown } | null)?.kind === 'signed-out') {
-          removeStoredUser(mountAuthority, mountClientId);
-          applyUnauthenticated(true);
-        }
-      };
-    }
-
-    const onUserLoaded = (loaded: User): void => {
-      if (disposed) {
-        return;
-      }
-      setState({ user: loaded, isLoading: false, error: null });
-    };
-
-    const onUserUnloaded = (): void => {
-      if (disposed) {
-        return;
-      }
-      applyUnauthenticated(true);
-      channel?.postMessage({ kind: 'signed-out' });
-    };
-
-    const onSilentRenewError = (renewError: Error): void => {
-      if (disposed) {
-        return;
-      }
-      setState((previous) => ({ ...previous, error: formatSilentRenewError(renewError) }));
-    };
-
-    const onAccessTokenExpired = (): void => {
-      if (disposed) {
-        return;
-      }
-      setState((previous) => ({ ...previous, user: null }));
-    };
-
-    manager.events.addUserLoaded(onUserLoaded);
-    manager.events.addUserUnloaded(onUserUnloaded);
-    manager.events.addSilentRenewError(onSilentRenewError);
-    manager.events.addAccessTokenExpired(onAccessTokenExpired);
-
-    onCleanup(() => {
-      manager.events.removeUserLoaded(onUserLoaded);
-      manager.events.removeUserUnloaded(onUserUnloaded);
-      manager.events.removeSilentRenewError(onSilentRenewError);
-      manager.events.removeAccessTokenExpired(onAccessTokenExpired);
-      channel?.close();
-    });
-
-    void bootstrap(manager);
-  });
-
-  async function bootstrap(manager: ReturnType<typeof resolveUserManager>): Promise<void> {
-    try {
-      if (isCallback) {
-        const outcome = await exchangeCallback(manager, props.config);
-        if (disposed) {
-          return;
-        }
-        setState({ user: outcome.user, isLoading: false, error: outcome.error });
-        return;
-      }
-
-      const loaded = await withTimeout(manager.getUser(), getTimeoutMs(props.config), INITIALIZATION_TIMEOUT_MESSAGE);
-      if (disposed) {
-        return;
-      }
-      setState({ user: loaded, isLoading: false, error: null });
-    } catch (caught) {
-      if (disposed) {
-        return;
-      }
-      setState({ user: null, isLoading: false, error: messageOf(caught) });
-    }
-  }
-
-  const value: AuthContextValue = {
+  const contextValue: AuthContextValue = {
     user,
     isLoading,
     isAuthenticated,
@@ -392,13 +224,119 @@ export const AuthProvider: Component<AuthProviderProps> = (props) => {
     signInSilent,
   };
 
-  return <AuthContext.Provider value={value}>{props.children}</AuthContext.Provider>;
+  onMount(() => {
+    if (!browser) {
+      setState({ user: null, isLoading: false, error: null });
+      return;
+    }
+
+    const initialConfig = currentConfig();
+    let manager: AuthUserManager | undefined;
+
+    let startupError: unknown;
+    try {
+      manager = getAuthUserManager(initialConfig);
+    } catch (caught: unknown) {
+      startupError = caught;
+    }
+
+    if (!manager) {
+      if (isCallback) {
+        cleanupFailedAuthCallback(initialConfig);
+      }
+      setState({
+        user: null,
+        isLoading: false,
+        error: getSafeErrorMessage(startupError),
+      });
+      return;
+    }
+
+    const activeManager = manager;
+    const identity = getConfigIdentity(initialConfig);
+    const startingGeneration = getSignOutGeneration(initialConfig.authority, initialConfig.clientId);
+
+    const onUserLoaded = (loadedUser: User): void => {
+      if (disposed) return;
+      if (hasManagedRenewal(identity)) return;
+      setState({ user: loadedUser, isLoading: false, error: null });
+    };
+    const onUserUnloaded = (): void => {
+      if (disposed) return;
+      batch(() => setState({ user: null, isLoading: false, error: null }));
+      publishSignOut(initialConfig.authority, initialConfig.clientId);
+    };
+    const onSilentRenewError = (renewError: Error): void => {
+      if (disposed) return;
+      if (hasManagedRenewal(identity)) return;
+      setState((previous) => ({ ...previous, error: getInteractionErrorMessage(renewError) }));
+    };
+    const onAccessTokenExpired = (): void => {
+      if (disposed) return;
+      setState((previous) => ({ ...previous, user: null }));
+    };
+
+    const removeEventHandlers = subscribeToManagerEvents(identity, activeManager, {
+      userLoaded: onUserLoaded,
+      userUnloaded: onUserUnloaded,
+      silentRenewError: onSilentRenewError,
+      accessTokenExpired: onAccessTokenExpired,
+    });
+
+    const unsubscribeSignOut = subscribeToSignOut(initialConfig.authority, initialConfig.clientId, () => {
+      if (disposed) return;
+      clearPersistedUserAfterRemoteSignOut(initialConfig.authority, initialConfig.clientId);
+      batch(() => setState({ user: null, isLoading: false, error: null }));
+    });
+
+    onCleanup(() => {
+      disposed = true;
+      unsubscribeSignOut();
+      removeEventHandlers();
+    });
+
+    const bootstrap = async (): Promise<void> => {
+      if (isCallback) {
+        try {
+          const result = await processAuthRedirectCallback(initialConfig, () => !disposed);
+          if (disposed || startingGeneration !== getSignOutGeneration(initialConfig.authority, initialConfig.clientId))
+            return;
+          setState({
+            user: result.user,
+            isLoading: false,
+            error:
+              result.cleanupError === undefined
+                ? null
+                : getSafeErrorMessage(result.cleanupError, 'The callback return-URL fallback could not be removed.'),
+          });
+        } catch (caught: unknown) {
+          if (!disposed) setState({ user: null, isLoading: false, error: getSafeErrorMessage(caught) });
+        }
+        return;
+      }
+
+      try {
+        const loadedUser = await withTimeout(
+          activeManager.getUser(),
+          getTimeoutMs(initialConfig),
+          'Authentication initialization timed out.',
+        );
+        if (disposed || startingGeneration !== getSignOutGeneration(initialConfig.authority, initialConfig.clientId))
+          return;
+        setState({ user: loadedUser, isLoading: false, error: null });
+      } catch (caught: unknown) {
+        if (!disposed) setState({ user: null, isLoading: false, error: getSafeErrorMessage(caught) });
+      }
+    };
+
+    void bootstrap();
+  });
+
+  return <AuthContext.Provider value={contextValue}>{props.children}</AuthContext.Provider>;
 };
 
-export function useAuth(): AuthContextValue {
+export const useAuth = (): AuthContextValue => {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error(HOOK_OUTSIDE_PROVIDER_MESSAGE);
-  }
+  if (!context) throw new Error('useAuth must be called inside an AuthProvider.');
   return context;
-}
+};

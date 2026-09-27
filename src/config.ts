@@ -1,57 +1,70 @@
-import { ACCOUNT_URL_SUFFIX, DEFAULT_RETURN_URL_STORAGE_KEY, DEFAULT_SCOPE, DEFAULT_TIMEOUT_MS } from './constants';
+import type { OidcAuthConfig } from './types';
 
-export interface OidcAuthConfig {
+export const DEFAULT_TIMEOUT_MS = 8_000;
+export const DEFAULT_SCOPE = 'openid profile email';
+export const DEFAULT_RETURN_URL_STORAGE_KEY = 'velvet-auth:return-url';
+
+export interface ResolvedOidcAuthConfig {
   authority: string;
   clientId: string;
   appUrl: string;
-  redirectUri?: string;
-  postLogoutRedirectUri?: string;
+  redirectUri: string;
+  postLogoutRedirectUri: string;
   silentRedirectUri?: string;
-  accountUrl?: string;
-  timeoutMs?: number;
-  returnUrlStorageKey?: string;
-  scope?: string;
+  accountUrl: string;
+  timeoutMs: number;
+  returnUrlStorageKey: string;
+  scope: string;
 }
 
-export function getRedirectUri(config: OidcAuthConfig): string {
-  return config.redirectUri ?? config.appUrl;
-}
+export const getRedirectUri = (config: OidcAuthConfig): string => config.redirectUri ?? config.appUrl;
 
-export function getPostLogoutRedirectUri(config: OidcAuthConfig): string {
-  return config.postLogoutRedirectUri ?? config.appUrl;
-}
+export const getPostLogoutRedirectUri = (config: OidcAuthConfig): string =>
+  config.postLogoutRedirectUri ?? config.appUrl;
 
-export function getSilentRedirectUri(config: OidcAuthConfig): string | undefined {
-  return config.silentRedirectUri;
-}
+export const getSilentRedirectUri = (config: OidcAuthConfig): string | undefined => config.silentRedirectUri;
 
-export function getScope(config: OidcAuthConfig): string {
-  return config.scope ?? DEFAULT_SCOPE;
-}
+export const getScope = (config: OidcAuthConfig): string => config.scope ?? DEFAULT_SCOPE;
 
-export function getTimeoutMs(config: OidcAuthConfig): number {
-  return config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-}
+export const getTimeoutMs = (config: OidcAuthConfig): number => {
+  const timeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  return Number.isFinite(timeoutMs) && timeoutMs > 0 ? timeoutMs : DEFAULT_TIMEOUT_MS;
+};
 
-export function getReturnUrlStorageKey(config: OidcAuthConfig): string {
-  return config.returnUrlStorageKey ?? DEFAULT_RETURN_URL_STORAGE_KEY;
-}
+export const getReturnUrlStorageKey = (config: OidcAuthConfig): string =>
+  config.returnUrlStorageKey ?? DEFAULT_RETURN_URL_STORAGE_KEY;
 
-export function getAccountUrl(config: OidcAuthConfig): string {
-  if (config.accountUrl !== undefined) {
-    return config.accountUrl;
+export const getAccountUrl = (config: OidcAuthConfig): string =>
+  config.accountUrl ?? `${config.authority.replace(/\/+$/u, '')}/account`;
+
+export const resolveOidcAuthConfig = (config: OidcAuthConfig): ResolvedOidcAuthConfig => {
+  if (config.clientId.includes(':')) {
+    throw new TypeError('The OIDC client identifier must not contain ":".');
   }
-  return `${config.authority.replace(/\/+$/u, '')}${ACCOUNT_URL_SUFFIX}`;
-}
 
-export function getConfigIdentityKey(config: OidcAuthConfig): string {
+  return {
+    authority: config.authority,
+    clientId: config.clientId,
+    appUrl: config.appUrl,
+    redirectUri: getRedirectUri(config),
+    postLogoutRedirectUri: getPostLogoutRedirectUri(config),
+    silentRedirectUri: config.silentRedirectUri,
+    accountUrl: getAccountUrl(config),
+    timeoutMs: getTimeoutMs(config),
+    returnUrlStorageKey: getReturnUrlStorageKey(config),
+    scope: getScope(config),
+  };
+};
+
+export const getConfigIdentity = (config: OidcAuthConfig): string => {
+  const resolved = resolveOidcAuthConfig(config);
   return JSON.stringify([
-    config.authority,
-    config.clientId,
-    config.appUrl,
-    getRedirectUri(config),
-    getPostLogoutRedirectUri(config),
-    getSilentRedirectUri(config) ?? null,
-    getScope(config),
+    resolved.authority,
+    resolved.clientId,
+    resolved.appUrl,
+    resolved.redirectUri,
+    resolved.postLogoutRedirectUri,
+    resolved.silentRedirectUri ?? null,
+    resolved.scope,
   ]);
-}
+};
