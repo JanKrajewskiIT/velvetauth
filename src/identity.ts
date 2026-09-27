@@ -5,11 +5,11 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 export const decodeAccessTokenPayload = (token: string): AccessTokenPayload => {
   const segments = token.split('.');
-  if (segments.length !== 3 || segments[1] === '') {
+  const encoded = segments[1];
+  if (segments.length !== 3 || !encoded) {
     throw new TypeError('The access token is not a valid JWT.');
   }
 
-  const encoded = segments[1];
   if (!/^[A-Za-z0-9_-]+$/u.test(encoded)) {
     throw new TypeError('The access token payload is not valid base64url.');
   }
