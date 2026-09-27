@@ -51,6 +51,7 @@ Specs use functional names consistently so cross-references work. These names ar
 | 12  | [user-manager-factory](12-user-manager-factory.md)     | Custom OIDC client injection.                                                |
 | 13  | [consumer-integration](13-consumer-integration.md)     | Required integration ergonomics for consumer apps.                           |
 | 14  | [release-and-tooling](14-release-and-tooling.md)       | Packaging shape, verification gates, commit hooks, CI and release pipelines. |
+| 15  | [source-reconciliation](15-source-reconciliation.md)   | Source/spec conflicts, open contract decisions and clean-room handoff status. |
 
 ## Glossary
 

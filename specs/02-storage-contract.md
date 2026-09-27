@@ -4,7 +4,7 @@
 
 By default, the framework persists the OIDC user record in tab-scoped storage (`sessionStorage`). Closing the tab signs the user out — no zombie sessions, no cross-tab token leakage on shared computers. This is the deliberate default. Consumers that need cross-tab persistence MUST opt in via [12-user-manager-factory](12-user-manager-factory.md).
 
-The framework owns exactly two storage entries of its own plus whatever the underlying OIDC client persists for its own protocol state. Adding a third framework-owned entry requires a spec update.
+The framework owns one logical storage entry of its own: the return-URL fallback. The OIDC client owns the persisted user record and OIDC protocol state. Adding another framework-owned entry requires a spec update.
 
 All storage reads and writes MUST be guarded against non-browser runtimes and MUST become no-ops outside a browser. Reading the persisted user MUST be synchronous, MUST return a null-equivalent value when the entry is missing or unparseable, and MUST NOT throw.
 

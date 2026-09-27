@@ -105,3 +105,9 @@ The framework MUST NOT take a dependency on a router. Consumers integrate the au
 ## How to read these specs
 
 Specs are numbered in dependency order. Earlier specs define foundational contracts that later specs build on. Each spec is self-contained but cross-references neighbors when behavior overlaps. The configuration spec ([01-configuration](01-configuration.md)) is referenced by almost every other spec; the storage contract ([02-storage-contract](02-storage-contract.md)) and return-URL safety ([10-return-url-safety](10-return-url-safety.md)) are referenced by all flow specs.
+
+## Source evidence and handoff status
+
+These files define the proposed clean-room target; they are not proof that the current package implements every MUST requirement. Executable evidence is in `src/`, `package.json`, the root configuration files, and `.github/`. Where that evidence disagrees with a spec, the disagreement and its status are recorded in [15-source-reconciliation](15-source-reconciliation.md). `SOURCE` identifies observed repository behavior, `AGENT` identifies an unapproved recommendation, and `ASSUMPTION` identifies an unresolved input.
+
+The handoff is **not frozen** while any `OPEN` decision in the reconciliation register could change public, security, persistence, or operational behavior. After those decisions are approved and incorporated, the resolved specs become the sole implementation brief. A replacement implementation should preserve the approved observable contract, not the current private file layout or algorithms, and should not consult the old source unless the user explicitly reopens it.

@@ -86,7 +86,22 @@ All functions below MUST be safely callable in any runtime (browser, SSR, worker
 | `isBrowserRuntime` | `() → boolean`                                                              | Returns true when `window` and `sessionStorage` are available.               |
 | `withTimeout`      | `<T>(promise: Promise<T>, timeoutMs: number, message: string) → Promise<T>` | Wraps a promise with a timeout; rejects with the given message when elapsed. |
 
-## Step 6 — Anti-patterns the framework MUST make difficult
+## Step 6 — Public TypeScript types
+
+The package MUST export the following types from its single public entry point. These declarations are part of the consumer contract even though they have no runtime representation.
+
+| Type                                  | Required contract                                                                                                                                                                                      |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `OidcAuthConfig`                      | Configuration fields and optionality defined in [01-configuration](01-configuration.md).                                                                                                              |
+| `AuthProviderProps`                   | `{ config: OidcAuthConfig; children?: JSX.Element }`.                                                                                                                                                  |
+| `AuthContextValue`                    | The accessor and operation members defined in [03-bootstrap-hydration](03-bootstrap-hydration.md), with SolidJS `Accessor<T>` types for reactive values.                                               |
+| `SignInOptions`                       | Optional `acrValues`, `prompt`, `loginHint`, `uiLocales` string fields and `extraQueryParams?: Record<string, string>`, as defined in [04-sign-in](04-sign-in.md).                                    |
+| `AccessTokenPayload`                  | An object with optional `realm_access.roles`, optional `resource_access` role arrays, and unknown-valued additional claims, as defined in [09-identity-exposure](09-identity-exposure.md).               |
+| `OidcAuthUserManagerFactoryConfig`    | Exactly the fields and resolved values defined in [12-user-manager-factory](12-user-manager-factory.md).                                                                                                |
+| `AuthUserManager`                     | Structural OIDC client contract. `events` has `addUserLoaded` / `removeUserLoaded` with `(user: User) => void`, `addUserUnloaded` / `removeUserUnloaded` with `() => void`, `addSilentRenewError` / `removeSilentRenewError` with `(error: Error) => void`, and `addAccessTokenExpired` / `removeAccessTokenExpired` with `() => void`. Methods: `getUser(): Promise<User \| null>`, `signinRedirect(args?: SigninRedirectArgs): Promise<void>`, `signinRedirectCallback(url?: string): Promise<User>`, `signinSilent(): Promise<User \| null>`, and `signoutRedirect(args?: SignoutRedirectArgs): Promise<void>`. `User`, `SigninRedirectArgs`, and `SignoutRedirectArgs` are supplied by `oidc-client-ts`. |
+| `OidcAuthUserManagerFactory`          | `(config: OidcAuthUserManagerFactoryConfig) => AuthUserManager`.                                                                                                                                       |
+
+## Step 7 — Anti-patterns the framework MUST make difficult
 
 | Anti-pattern                                                            | Why wrong                                                                   | How the framework helps                                                                 |
 | ----------------------------------------------------------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
