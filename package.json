@@ -1,6 +1,6 @@
 {
   "name": "@jankrajewskiit/auth",
-  "version": "2.0.7",
+  "version": "3.2.0",
   "type": "module",
   "license": "MIT",
   "description": "SolidJS browser-side OIDC authentication framework wrapping oidc-client-ts.",
