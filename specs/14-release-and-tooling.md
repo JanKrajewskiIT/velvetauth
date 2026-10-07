@@ -125,6 +125,8 @@ Every workflow MUST pin `actions/checkout` at `v6` and `actions/setup-node` at `
 
 Every caller that invokes `verify.yml` via `workflow_call` MUST pass `secrets: inherit` so that `GITHUB_TOKEN` is available inside the reusable workflow for authenticated `npm ci`. Without it, the `${GHCR_TOKEN}` substitution in `.npmrc` resolves to an empty string and the install fails with a 401.
 
+The GitHub Packages package `@jankrajewskiit/configs` MUST grant the `velvetauth` repository Actions access with at least the `Read` role. The `packages: read` workflow permission and token forwarding do not override package-level access control; without this grant, `npm ci` fails with `403 Forbidden` and `read_package` even when authentication is configured correctly.
+
 ## Step 9 — Release pipeline
 
 A release MUST be triggered by pushing a git tag matching the release-tag pattern (`v<semver>`). No other trigger MUST cause a publish.
