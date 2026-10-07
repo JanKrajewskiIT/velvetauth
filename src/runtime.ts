@@ -1,24 +1,24 @@
-export const isBrowserRuntime = (): boolean => {
-  if (typeof window === 'undefined') return false;
+import { APP_ROOT_PATH } from './url.ts';
+
+export const getSessionStorage = (): Storage | null => {
+  if (typeof window === 'undefined') {
+    return null;
+  }
   try {
-    const storage = window.sessionStorage;
-    return Boolean(storage);
+    const { sessionStorage }: { readonly sessionStorage?: Storage } = window;
+    return sessionStorage ?? null;
   } catch {
-    return false;
+    // Blocked storage throws SecurityError on access; the storage contract treats it as a non-browser runtime.
+    return null;
   }
 };
 
-export const withTimeout = <T>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> =>
-  new Promise<T>((resolve, reject) => {
-    const timeoutId = setTimeout(() => reject(new Error(message)), timeoutMs);
-    promise.then(
-      (value) => {
-        clearTimeout(timeoutId);
-        resolve(value);
-      },
-      (error: unknown) => {
-        clearTimeout(timeoutId);
-        reject(error instanceof Error ? error : new Error(String(error)));
-      },
-    );
-  });
+export const isBrowserRuntime = (): boolean => getSessionStorage() !== null;
+
+export const getCurrentReturnUrl = (): string => {
+  if (typeof window === 'undefined') {
+    return APP_ROOT_PATH;
+  }
+  const { pathname, search, hash } = window.location;
+  return `${pathname}${search}${hash}`;
+};

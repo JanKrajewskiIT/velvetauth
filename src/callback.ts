@@ -1,116 +1,102 @@
 import type { User } from 'oidc-client-ts';
 
-import { getReturnUrlStorageKey, getTimeoutMs } from './config';
-import { getConfigIdentity } from './config';
-import { getSafeErrorMessage } from './errors';
-import { beginManagedRenewal } from './renewal-state';
-import { isOidcCallbackReturnUrl, normalizeReturnUrl, resolveCallbackReturnUrl } from './return-url';
-import { isBrowserRuntime, withTimeout } from './runtime';
-import { removeReturnUrl, takeReturnUrl } from './storage';
-import type { OidcAuthConfig } from './types';
-import { getAuthUserManager } from './user-manager';
+import { isOidcCallbackReturnUrl } from './callback-detection.ts';
+import type { OidcAuthConfig, ResolvedAuthConfig } from './config.ts';
+import { resolveAuthConfig } from './config.ts';
+import { AUTH_TIMEOUT_MESSAGES } from './errors.ts';
+import { resolveCallbackReturnUrl, resolveSafeReturnUrl } from './return-url.ts';
+import { getCurrentReturnUrl, isBrowserRuntime } from './runtime.ts';
+import type { ReturnUrlFallback } from './storage.ts';
+import { consumeReturnUrl } from './storage.ts';
+import { withTimeout } from './timeout.ts';
+import { APP_ROOT_PATH } from './url.ts';
+import type { AuthUserManager } from './user-manager.ts';
+import { getAuthUserManager } from './user-manager.ts';
 
-export interface AuthCallbackResult {
-  user: User;
-  navigated: boolean;
-  cleanupError?: unknown;
+export interface CallbackOutcome {
+  readonly user: User;
+  readonly navigated: boolean;
+  readonly fallbackError: Error | undefined;
 }
 
-const cleanCallbackUrl = (): void => {
-  window.history.replaceState(window.history.state, '', `${window.location.pathname}${window.location.hash}`);
+export interface CallbackOptions {
+  /** Return false once the owner is gone so the callback no longer navigates. */
+  readonly isActive?: () => boolean;
+}
+
+const alwaysActive = (): boolean => true;
+
+export const isCurrentUrlCallback = (config: ResolvedAuthConfig): boolean =>
+  isOidcCallbackReturnUrl(getCurrentReturnUrl(), config.redirectUri);
+
+const stripCallbackQuery = (): void => {
+  const { pathname, hash } = window.location;
+  window.history.replaceState(window.history.state, '', `${pathname}${hash}`);
 };
 
-const navigateAfterCallback = (target: string): boolean => {
-  const currentWithoutQuery = `${window.location.pathname}${window.location.hash}`;
-  if (target === currentWithoutQuery) {
-    cleanCallbackUrl();
+/** Cleans the callback URL and drops the return-URL fallback after a failure that the caller reports. */
+export const discardCallback = (config: ResolvedAuthConfig): void => {
+  stripCallbackQuery();
+  // The caller surfaces the primary failure; a cleanup failure here must not replace it.
+  consumeReturnUrl(config.returnUrlStorageKey);
+};
+
+const resolveCallbackTarget = (config: ResolvedAuthConfig, state: unknown, fallback: ReturnUrlFallback): string => {
+  const fromState = resolveCallbackReturnUrl(state, config.redirectUri);
+  const fromFallback =
+    fallback.ok && fallback.value !== null ? resolveSafeReturnUrl(fallback.value, config.redirectUri) : undefined;
+  return fromState ?? fromFallback ?? APP_ROOT_PATH;
+};
+
+/** Returns true only when a full navigation was issued. */
+const navigateToTarget = (target: string): boolean => {
+  const { pathname, hash } = window.location;
+  if (target === `${pathname}${hash}`) {
+    stripCallbackQuery();
     return false;
   }
-
   window.location.replace(target);
   return true;
 };
 
-export const cleanupFailedAuthCallback = (config: OidcAuthConfig): unknown => {
-  let cleanupError: unknown;
+/**
+ * Exchanges the current callback URL and moves the user to their return URL.
+ * Rejects after cleaning the URL when resolution or the exchange fails.
+ */
+export const completeRedirectCallback = async (
+  config: ResolvedAuthConfig,
+  getManager: () => AuthUserManager,
+  { isActive = alwaysActive }: CallbackOptions = {},
+): Promise<CallbackOutcome> => {
+  let user: User;
   try {
-    takeReturnUrl(getReturnUrlStorageKey(config));
-  } catch (error: unknown) {
-    cleanupError = error;
-  }
-  cleanCallbackUrl();
-  return cleanupError;
-};
-
-export const processAuthRedirectCallback = async (
-  config: OidcAuthConfig,
-  canNavigate: () => boolean = () => true,
-): Promise<AuthCallbackResult> => {
-  const callbackUrl = window.location.href;
-  const callbackPath = config.redirectUri ?? config.appUrl;
-  let user: User | null = null;
-  let exchangeError: unknown;
-
-  try {
-    const manager = getAuthUserManager(config);
-    const finishCallback = beginManagedRenewal(getConfigIdentity(config));
-    let callbackExchange: ReturnType<typeof manager.signinRedirectCallback>;
-    try {
-      callbackExchange = manager.signinRedirectCallback(callbackUrl);
-    } catch (error: unknown) {
-      finishCallback();
-      throw error;
-    }
-    callbackExchange.then(finishCallback, finishCallback);
-    user = await withTimeout(callbackExchange, getTimeoutMs(config), 'Authentication callback timed out.');
-  } catch (error: unknown) {
-    exchangeError = error;
+    user = await withTimeout(
+      getManager().signinRedirectCallback(window.location.href),
+      config.timeoutMs,
+      AUTH_TIMEOUT_MESSAGES.callback,
+    );
+  } catch (error) {
+    discardCallback(config);
+    throw error;
   }
 
-  let fallback: string | null = null;
-  let cleanupError: unknown;
-  try {
-    fallback = takeReturnUrl(getReturnUrlStorageKey(config));
-  } catch (error: unknown) {
-    cleanupError = error;
-  } finally {
-    cleanCallbackUrl();
-  }
-  if (exchangeError !== undefined) throw new Error(getSafeErrorMessage(exchangeError));
-  if (!user) throw new Error('The OIDC callback completed without a user.');
-
-  const stateTarget = resolveCallbackReturnUrl(user.state, callbackPath, window.location.origin);
-  const normalizedFallback = normalizeReturnUrl(fallback ?? undefined);
-  const fallbackTarget =
-    !cleanupError && !isOidcCallbackReturnUrl(normalizedFallback, callbackPath, window.location.origin)
-      ? normalizedFallback
-      : undefined;
-  const target = stateTarget ?? fallbackTarget ?? '/';
-  const navigated = canNavigate() ? navigateAfterCallback(target) : false;
-
-  return { user, navigated, cleanupError };
+  const fallback = consumeReturnUrl(config.returnUrlStorageKey);
+  const target = resolveCallbackTarget(config, user.state, fallback);
+  const navigated = isActive() ? navigateToTarget(target) : false;
+  return { user, navigated, fallbackError: fallback.ok ? undefined : fallback.error };
 };
 
 export const handleAuthRedirectCallback = async (config: OidcAuthConfig): Promise<boolean> => {
-  if (!isBrowserRuntime()) return false;
-  const callbackPath = config.redirectUri ?? config.appUrl;
-  if (!isOidcCallbackReturnUrl(window.location.href, callbackPath, window.location.origin)) {
+  if (!isBrowserRuntime()) {
     return false;
   }
-
-  try {
-    const result = await processAuthRedirectCallback(config);
-    if (result.cleanupError !== undefined) {
-      throw new Error('The callback return-URL fallback could not be removed.');
-    }
-    return result.navigated;
-  } catch (error: unknown) {
-    try {
-      removeReturnUrl(getReturnUrlStorageKey(config));
-    } catch {
-      // Preserve the callback failure while still attempting URL cleanup.
-    }
-    cleanCallbackUrl();
-    throw error;
+  const resolved = resolveAuthConfig(config);
+  if (!isCurrentUrlCallback(resolved)) {
+    return false;
   }
+  const outcome = await completeRedirectCallback(resolved, () => getAuthUserManager(resolved));
+  if (outcome.fallbackError !== undefined) {
+    throw outcome.fallbackError;
+  }
+  return outcome.navigated;
 };

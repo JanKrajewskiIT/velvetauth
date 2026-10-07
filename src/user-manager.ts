@@ -1,38 +1,32 @@
+import type { SigninRedirectArgs, SignoutRedirectArgs, User } from 'oidc-client-ts';
 import { UserManager, WebStorageStateStore } from 'oidc-client-ts';
 
-import { getConfigIdentity, resolveOidcAuthConfig } from './config';
-import { isBrowserRuntime } from './runtime';
-import type {
-  AuthUserManager,
-  OidcAuthConfig,
-  OidcAuthUserManagerFactory,
-  OidcAuthUserManagerFactoryConfig,
-} from './types';
+import type { OidcAuthUserManagerFactoryConfig, ResolvedAuthConfig } from './config.ts';
+import { toUserManagerFactoryConfig } from './config.ts';
+import { AUTH_ERROR_MESSAGES } from './errors.ts';
+import { isBrowserRuntime } from './runtime.ts';
 
-type ManagerCacheEntry = { status: 'resolved'; manager: AuthUserManager } | { status: 'rejected'; error: unknown };
-
-const managers = new Map<string, ManagerCacheEntry>();
-let activeFactory: OidcAuthUserManagerFactory | null = null;
-
-export const setAuthUserManagerFactory = (factory: OidcAuthUserManagerFactory | null): void => {
-  activeFactory = factory;
-  managers.clear();
-};
-
-const createFactoryConfig = (config: OidcAuthConfig): OidcAuthUserManagerFactoryConfig => {
-  const resolved = resolveOidcAuthConfig(config);
-  return {
-    authority: resolved.authority,
-    clientId: resolved.clientId,
-    redirectUri: resolved.redirectUri,
-    postLogoutRedirectUri: resolved.postLogoutRedirectUri,
-    silentRedirectUri: resolved.silentRedirectUri,
-    automaticSilentRenew: true,
-    scope: resolved.scope,
+export interface AuthUserManager {
+  readonly events: {
+    readonly addUserLoaded: (callback: (user: User) => void) => void;
+    readonly removeUserLoaded: (callback: (user: User) => void) => void;
+    readonly addUserUnloaded: (callback: () => void) => void;
+    readonly removeUserUnloaded: (callback: () => void) => void;
+    readonly addSilentRenewError: (callback: (error: Error) => void) => void;
+    readonly removeSilentRenewError: (callback: (error: Error) => void) => void;
+    readonly addAccessTokenExpired: (callback: () => void) => void;
+    readonly removeAccessTokenExpired: (callback: () => void) => void;
   };
-};
+  readonly getUser: () => Promise<User | null>;
+  readonly signinRedirect: (args?: SigninRedirectArgs) => Promise<void>;
+  readonly signinRedirectCallback: (url?: string) => Promise<User>;
+  readonly signinSilent: () => Promise<User | null>;
+  readonly signoutRedirect: (args?: SignoutRedirectArgs) => Promise<void>;
+}
 
-const createDefaultManager = (config: OidcAuthUserManagerFactoryConfig): AuthUserManager =>
+export type OidcAuthUserManagerFactory = (config: OidcAuthUserManagerFactoryConfig) => AuthUserManager;
+
+const createDefaultUserManager: OidcAuthUserManagerFactory = (config) =>
   new UserManager({
     authority: config.authority,
     client_id: config.clientId,
@@ -41,29 +35,41 @@ const createDefaultManager = (config: OidcAuthUserManagerFactoryConfig): AuthUse
     silent_redirect_uri: config.silentRedirectUri,
     response_type: 'code',
     scope: config.scope,
-    automaticSilentRenew: true,
-    loadUserInfo: false,
-    monitorSession: false,
+    automaticSilentRenew: config.automaticSilentRenew,
     userStore: new WebStorageStateStore({ store: window.sessionStorage }),
   });
 
-export const getAuthUserManager = (config: OidcAuthConfig): AuthUserManager => {
-  if (!isBrowserRuntime()) {
-    throw new Error('The OIDC user manager can only be resolved in a browser runtime.');
-  }
+let registeredFactory: OidcAuthUserManagerFactory | null = null;
 
-  const identity = getConfigIdentity(config);
-  const existing = managers.get(identity);
-  if (existing?.status === 'resolved') return existing.manager;
-  if (existing?.status === 'rejected') throw existing.error;
+type ManagerEntry = { readonly manager: AuthUserManager } | { readonly failure: unknown };
 
+/**
+ * One entry per identity for the module lifetime; replacing the factory discards every entry.
+ * A factory failure is cached too, so the factory is never retried for the same identity.
+ */
+const entries = new Map<string, ManagerEntry>();
+
+const createEntry = (config: ResolvedAuthConfig): ManagerEntry => {
   try {
-    const factoryConfig = createFactoryConfig(config);
-    const manager = activeFactory ? activeFactory(factoryConfig) : createDefaultManager(factoryConfig);
-    managers.set(identity, { status: 'resolved', manager });
-    return manager;
-  } catch (error: unknown) {
-    managers.set(identity, { status: 'rejected', error });
-    throw error;
+    return { manager: (registeredFactory ?? createDefaultUserManager)(toUserManagerFactoryConfig(config)) };
+  } catch (failure) {
+    return { failure };
   }
+};
+
+export const setAuthUserManagerFactory = (factory: OidcAuthUserManagerFactory | null): void => {
+  registeredFactory = factory;
+  entries.clear();
+};
+
+export const getAuthUserManager = (config: ResolvedAuthConfig): AuthUserManager => {
+  if (!isBrowserRuntime()) {
+    throw new Error(AUTH_ERROR_MESSAGES.browserRequired);
+  }
+  const entry = entries.get(config.identityKey) ?? createEntry(config);
+  entries.set(config.identityKey, entry);
+  if ('failure' in entry) {
+    throw entry.failure;
+  }
+  return entry.manager;
 };

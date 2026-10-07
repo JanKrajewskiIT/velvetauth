@@ -1,63 +1,23 @@
 # Changelog
 
-## 3.0.0
+## Unreleased
 
 ### Breaking
 
-- Standalone callback failures reject instead of resolving `false`.
-- Return-URL handling rejects malformed, backslash-containing, and control-character paths.
+- Not assessed. Compare the public surface and behavior against the last published version (2.0.7) before choosing the version bump.
 
 ### Added
 
-- Clean-room SolidJS OIDC authentication package implementation.
-- Per-identity OIDC client caching and cross-tab sign-out invalidation.
-- ESM package, provenance release workflow, and typed public API.
+- Clean-room implementation of the contract in `specs/00-15` v1.2: `AuthProvider`, `useAuth`, `getAuthAccessToken`, `handleAuthRedirectCallback`, `setAuthUserManagerFactory`, and the stand-alone identity, URL, storage, and timing helpers.
+- Cross-tab sign-out through a same-origin `BroadcastChannel` scoped to the configuration identity, with per-identity invalidation of late renewal results.
+- Return-URL fallback rollback that undoes only the failing sign-in's own write.
 
 ### Changed
 
-- Every framework-invoked OIDC operation is bounded by the configured timeout.
-- Factory and browser storage failures follow explicit API-specific error contracts.
+- Every OIDC operation, including sign-in and sign-out redirects, is bounded by the configured timeout.
+- Client identifiers containing `:` are rejected with a descriptive error.
+- The configuration identity is the JSON encoding of the ordered, resolved identity tuple.
 
 ### Fixed
 
-- Late renewal results cannot restore authenticated state or return a token after cross-tab sign-out.
-
-## 2.0.1
-
-### Breaking
-
-- Historical release details are outside the clean-room brief.
-
-### Added
-
-- Historical release details are outside the clean-room brief.
-
-### Changed
-
-- Historical release details are outside the clean-room brief.
-
-### Fixed
-
-- Historical release details are outside the clean-room brief.
-
-## 0.1.0
-
-### Breaking
-
-- None — initial release.
-
-### Added
-
-- `AuthProvider` and `useAuth` reactive auth context for SolidJS.
-- `getAuthAccessToken` off-component access-token getter with on-demand silent renewal.
-- `handleAuthRedirectCallback` standalone callback handler.
-- `setAuthUserManagerFactory` custom OIDC client factory escape hatch.
-- Identity, URL, storage, configuration-default, and runtime helpers.
-
-### Changed
-
-- None — initial release.
-
-### Fixed
-
-- None — initial release.
+- Return-URL normalization rejects backslashes, ASCII control characters, and values that do not resolve on the same origin.

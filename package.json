@@ -19,7 +19,7 @@
     "type": "git",
     "url": "git+https://github.com/jankrajewskiit/velvet-auth.git"
   },
-  "packageManager": "npm@12.1.0",
+  "packageManager": "npm@12.2.0",
   "engines": {
     "node": ">=26"
   },
@@ -45,7 +45,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "build": "vite build && node scripts/copy-changelog.mjs",
+    "build": "vite build",
     "verify": "npm run typecheck && npm run lint && npm run build && publint && attw --pack --profile esm-only --ignore-rules internal-resolution-error",
     "prepublishOnly": "npm run verify",
     "prepare": "husky"
@@ -56,16 +56,16 @@
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",
-    "@jankrajewskiit/configs": "^2.0.6",
+    "@jankrajewskiit/configs": "^3.2.0",
     "@typescript/native": "npm:typescript@^7.0.2",
-    "eslint": "^10.11.0",
+    "eslint": "^10.12.0",
     "husky": "^9.1.7",
     "lint-staged": "^17.6.0",
     "oidc-client-ts": "^3.5.0",
     "prettier": "^3.9.9",
-    "publint": "^0.3.24",
-    "solid-js": "^1.9.15",
+    "publint": "^0.3.25",
+    "solid-js": "^1.9.17",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
-    "vite": "^8.3.1"
+    "vite": "^8.3.3"
   }
 }
