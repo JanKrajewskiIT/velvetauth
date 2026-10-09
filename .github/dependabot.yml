@@ -1,4 +1,10 @@
 version: 2
+registries:
+  velvetconfigs:
+    type: git
+    url: https://github.com
+    username: x-access-token
+    password: ${{secrets.DEPENDABOT_GIT_TOKEN}}
 updates:
   - package-ecosystem: npm
     directory: /
@@ -67,3 +73,5 @@ updates:
       - github-actions
     assignees:
       - jankrajewskiit
+    registries:
+      - velvetconfigs
