@@ -49,7 +49,7 @@ The entries SR-01 through SR-12 are resolved by explicit user approval. Their co
 | SR-11 | Treat Spec 14 as the target; do not inspect or reconcile with the previous checkout. Obtain release metadata values before manifest/release wiring.                                                                                       | [14](14-release-and-tooling.md)                                   |
 | SR-12 | Add stable requirement-group IDs, provenance, and behavior-based acceptance criteria.                                                                                                                                                     | This section                                                      |
 | SR-13 | OIDC user-loaded and silent-renew-error events caused by the off-component getter MUST NOT alter provider state, even if the getter times out before the underlying operation settles.                                                    | [08](08-access-token-retrieval.md)                                |
-| SR-14 | Use current library versions selected in the consumer manifest, including `@jankrajewskiit/configs ^3.2.0`; its public presets supersede the historical 2.x tooling requirement.                                                          | [14](14-release-and-tooling.md)                                   |
+| SR-14 | Use current library versions selected in the consumer manifest, including `@jankrajewskiit/configs ^3.3.4`; its public presets supersede the historical 2.x tooling requirement.                                                          | [14](14-release-and-tooling.md)                                   |
 
 ## Requirement Traceability
 

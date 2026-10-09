@@ -137,8 +137,7 @@ A published version is never unpublished. For a broken release, publish a supers
 
 Configure the default branch to require:
 
-- a passing `verify` status check;
-- a passing `audit` status check;
+- a passing `verify` status check that includes the `npm audit` step;
 - at least one approving review from a CODEOWNER;
 - an up-to-date branch before merging;
 - no force pushes and no direct pushes by non-administrators.

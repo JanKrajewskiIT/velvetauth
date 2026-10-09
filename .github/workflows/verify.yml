@@ -2,36 +2,15 @@ name: Verify
 
 on:
   workflow_call:
-
-permissions:
-  contents: read
-  packages: read
+    secrets:
+      GHCR_TOKEN:
+        required: false
 
 jobs:
-  audit:
-    name: audit
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-      - run: npm ci
-        env:
-          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - run: npm audit --audit-level=high
-
   verify:
-    name: verify
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-      - run: npm ci
-        env:
-          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - run: npm run verify
+    uses: jankrajewskiit/velvetconfigs/.github/workflows/verify-package.yml@main
+    permissions:
+      contents: read
+      packages: read
+    secrets:
+      GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}

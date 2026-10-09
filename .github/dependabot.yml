@@ -5,44 +5,65 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 10
-    labels:
-      - dependencies
-    reviewers:
-      - jankrajewskiit
     commit-message:
       prefix: chore
+      include: scope
+    labels:
+      - dependencies
+    assignees:
+      - jankrajewskiit
     groups:
       eslint:
         patterns:
-          - eslint*
-      prettier:
-        patterns:
-          - prettier*
+          - '@eslint/*'
+          - eslint
+          - 'eslint-*'
+          - typescript-eslint
       stylelint:
         patterns:
-          - stylelint*
+          - stylelint
+          - 'stylelint-*'
+      prettier:
+        patterns:
+          - prettier
+          - 'prettier-*'
       vite:
         patterns:
-          - vite*
+          - vite
+          - 'vite-*'
       typescript:
         patterns:
-          - typescript*
-      shared-configs:
-        patterns:
-          - '@jankrajewskiit/*'
+          - typescript
+          - '@typescript/*'
       solid:
         patterns:
-          - solid-js*
+          - solid-js
+          - 'solid-*'
       oidc:
         patterns:
-          - oidc-client-ts*
+          - 'oidc-client-ts*'
+      jankrajewskiit:
+        patterns:
+          - '@jankrajewskiit/*'
+      tooling:
+        patterns:
+          - husky
+          - lint-staged
+          - publint
+          - '@arethetypeswrong/cli'
+    ignore:
+      - dependency-name: node
+
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
-    labels:
-      - dependencies
-    reviewers:
-      - jankrajewskiit
+    open-pull-requests-limit: 10
     commit-message:
       prefix: chore
+      include: scope
+    labels:
+      - dependencies
+      - github-actions
+    assignees:
+      - jankrajewskiit

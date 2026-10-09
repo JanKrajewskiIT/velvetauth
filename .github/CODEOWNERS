@@ -2,6 +2,7 @@
 /specs/ @jankrajewskiit
 /src/ @jankrajewskiit
 /.github/workflows/ @jankrajewskiit
+/.github/dependabot.yml @jankrajewskiit
 /package.json @jankrajewskiit
 /package-lock.json @jankrajewskiit
 /.npmrc @jankrajewskiit

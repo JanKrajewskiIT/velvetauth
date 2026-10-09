@@ -35,11 +35,11 @@ The framework's `package.json` MUST declare at minimum:
 | `publishConfig.access`   | `"public"`. Required so the publish step can attach an OIDC-signed provenance attestation; npm refuses provenance for `restricted` or first-time private packages. |
 | `peerDependencies`       | SolidJS and `oidc-client-ts` at the minimum versions from [00-overview](00-overview.md).                                                                           |
 | `scripts`                | At minimum: `verify`, `build`, `typecheck`, `lint`, `lint:fix`, `format`, `format:check`, `prepublishOnly`, `prepare`.                                             |
-| `devDependencies`        | MUST include `@jankrajewskiit/configs` at `^3.2.0`.                                                                                                                |
+| `devDependencies`        | MUST include `@jankrajewskiit/configs` at `^3.3.4`.                                                                                                                |
 
 ## Step 3 — Shared tooling framework
 
-The framework MUST depend on `@jankrajewskiit/configs` at `^3.2.0` (3.x major). This supersedes the previous 2.x requirement by explicit user approval. Tooling MUST use the public factory contracts of the selected version; older factory shapes MUST NOT be copied into the implementation.
+The framework MUST depend on `@jankrajewskiit/configs` at `^3.3.4` (3.x major). This supersedes the previous 2.x requirement by explicit user approval. Tooling MUST use the public factory contracts of the selected version; older factory shapes MUST NOT be copied into the implementation.
 
 ## Release metadata inputs
 

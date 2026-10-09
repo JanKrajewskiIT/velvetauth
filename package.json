@@ -1,6 +1,6 @@
 {
   "name": "@jankrajewskiit/auth",
-  "version": "3.2.0",
+  "version": "3.3.0",
   "type": "module",
   "license": "MIT",
   "description": "SolidJS browser-side OIDC authentication framework wrapping oidc-client-ts.",
@@ -17,7 +17,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jankrajewskiit/velvet-auth.git"
+    "url": "git+https://github.com/JanKrajewskiIT/velvetauth.git"
   },
   "packageManager": "npm@12.2.0",
   "engines": {
@@ -40,23 +40,24 @@
     "access": "public"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "build": "vite build",
-    "verify": "npm run typecheck && npm run lint && npm run build && publint && attw --pack --profile esm-only --ignore-rules internal-resolution-error",
+    "verify": "npm run typecheck && npm run lint && npm run build && npm run verify:pkg",
+    "verify:pkg": "publint --strict && attw --pack . --entrypoints . --profile esm-only --ignore-rules internal-resolution-error",
     "prepublishOnly": "npm run verify",
     "prepare": "husky"
   },
   "peerDependencies": {
-    "oidc-client-ts": ">=3.1",
-    "solid-js": ">=1.9"
+    "oidc-client-ts": ">=3.1.0 <4",
+    "solid-js": ">=1.9.0 <2"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",
-    "@jankrajewskiit/configs": "^3.2.0",
+    "@jankrajewskiit/configs": "^3.3.4",
     "@typescript/native": "npm:typescript@^7.0.2",
     "eslint": "^10.12.0",
     "husky": "^9.1.7",
@@ -66,6 +67,6 @@
     "publint": "^0.3.25",
     "solid-js": "^1.9.17",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
-    "vite": "^8.3.3"
+    "vite": "^8.3.4"
   }
 }
