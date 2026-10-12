@@ -10,7 +10,7 @@ on:
         required: false
 jobs:
   verify:
-    uses: jankrajewskiit/velvetconfigs/.github/workflows/verify-package.yml@v3.5.0 # zizmor: ignore[unpinned-uses] -- Pin the unpublished v3.5.0 workflow commit after release.
+    uses: JanKrajewskiIT/velvetconfigs/.github/workflows/verify-package.yml@9d7851722b143c4d8aaf7ca0f2058f5ae149fe44 # v3.5.3
     with:
       package-artifact: velvet-package
     permissions:
