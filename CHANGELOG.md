@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.4.2
+
+- Add shared source/image security gates, CycloneDX SBOMs, pinned CI tooling, periodic security scans and Knip reports without changing the package version.
+
+- Enforce the shared toolchain/editor/lint gates, validate published NodeNext declarations, and publish verified archives.
+
+- Use Configs 3.5, CSS-free staged tasks and consistent formatting/ESLint gates.
+
 ## Unreleased
 
 ### Breaking

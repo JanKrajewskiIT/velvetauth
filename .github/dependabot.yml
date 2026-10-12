@@ -9,7 +9,7 @@ registries:
     type: npm-registry
     url: https://npm.pkg.github.com
     scope: '@jankrajewskiit'
-    token: ${{secrets.GHCR_TOKEN}}
+    token: ${{secrets.NPM_READ_TOKEN}}
 updates:
   - package-ecosystem: npm
     directory: /
@@ -19,10 +19,6 @@ updates:
     commit-message:
       prefix: chore
       include: scope
-    labels:
-      - dependencies
-    assignees:
-      - jankrajewskiit
     registries:
       - github-npm
     groups:
@@ -30,55 +26,42 @@ updates:
         patterns:
           - '@eslint/*'
           - eslint
-          - 'eslint-*'
+          - eslint-*
           - typescript-eslint
       stylelint:
         patterns:
           - stylelint
-          - 'stylelint-*'
-      prettier:
-        patterns:
-          - prettier
-          - 'prettier-*'
-      vite:
-        patterns:
-          - vite
-          - 'vite-*'
+          - stylelint-*
       typescript:
         patterns:
           - typescript
           - '@typescript/*'
-      solid:
+          - '@types/node'
+      vite:
         patterns:
-          - solid-js
-          - 'solid-*'
-      oidc:
-        patterns:
-          - 'oidc-client-ts*'
-      jankrajewskiit:
+          - vite
+          - vite-*
+      velvet:
         patterns:
           - '@jankrajewskiit/*'
       tooling:
         patterns:
+          - prettier
+          - prettier-*
           - husky
           - lint-staged
           - publint
-          - '@arethetypeswrong/cli'
-    ignore:
-      - dependency-name: node
-
+          - '@arethetypeswrong/*'
+          - size-limit
+          - '@size-limit/*'
+      solid:
+        patterns:
+          - solid-js
+          - '@solidjs/*'
+          - solid-*
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
-    open-pull-requests-limit: 10
-    commit-message:
-      prefix: chore
-      include: scope
-    labels:
-      - dependencies
-      - github-actions
-    assignees:
-      - jankrajewskiit
     registries:
       - velvetconfigs

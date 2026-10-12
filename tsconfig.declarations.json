@@ -1,0 +1,3 @@
+{
+  "extends": "@jankrajewskiit/configs/tsconfig/declarations"
+}

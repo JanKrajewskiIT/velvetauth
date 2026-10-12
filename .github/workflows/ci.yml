@@ -1,11 +1,11 @@
 name: CI
-
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   pull_request:
-    branches: [main]
-
+    branches:
+      - main
 jobs:
   verify:
     uses: ./.github/workflows/verify.yml
@@ -13,4 +13,7 @@ jobs:
       contents: read
       packages: read
     secrets:
-      GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+      NPM_READ_TOKEN: ${{ secrets.NPM_READ_TOKEN || secrets.GHCR_TOKEN }}
+      CONFIGS_READ_TOKEN: ${{ secrets.CONFIGS_READ_TOKEN }}
+permissions:
+  contents: read

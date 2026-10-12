@@ -1,9 +1,7 @@
 {
   "extends": "@jankrajewskiit/configs/tsconfig/lib",
   "compilerOptions": {
-    "rootDir": "src",
-    "types": [],
-    "declarationMap": false
+    "rootDir": "src"
   },
   "include": ["src"]
 }

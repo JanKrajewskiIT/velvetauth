@@ -1,3 +1,7 @@
 .agents/
 dist/
 package-lock.json
+
+.artifacts/
+
+.deployment/

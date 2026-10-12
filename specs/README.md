@@ -34,23 +34,23 @@ Specs use functional names consistently so cross-references work. These names ar
 
 ## Index
 
-| #   | Spec                                                   | Topic                                                                        |
-| --- | ------------------------------------------------------ | ---------------------------------------------------------------------------- |
-| 00  | [overview](00-overview.md)                             | Business goals, actors, architecture, glossary, IdP requirements.            |
-| 01  | [configuration](01-configuration.md)                   | Consumer configuration record and defaults.                                  |
-| 02  | [storage-contract](02-storage-contract.md)             | Browser storage usage, lifetimes, eviction.                                  |
-| 03  | [bootstrap-hydration](03-bootstrap-hydration.md)       | Provider mount, initial state, event subscriptions, SSR.                     |
-| 04  | [sign-in](04-sign-in.md)                               | Redirect to IdP, return-URL handling.                                        |
-| 05  | [callback](05-callback.md)                             | Post-IdP redirect processing.                                                |
-| 06  | [silent-renewal](06-silent-renewal.md)                 | Automatic + manual token renewal.                                            |
-| 07  | [sign-out](07-sign-out.md)                             | Redirect to IdP logout.                                                      |
-| 08  | [access-token-retrieval](08-access-token-retrieval.md) | Off-component access-token access.                                           |
-| 09  | [identity-exposure](09-identity-exposure.md)           | Profile fields, roles, account URL.                                          |
-| 10  | [return-url-safety](10-return-url-safety.md)           | Open-redirect protection.                                                    |
-| 11  | [error-model](11-error-model.md)                       | Error sources, surfacing, recovery.                                          |
-| 12  | [user-manager-factory](12-user-manager-factory.md)     | Custom OIDC client injection.                                                |
-| 13  | [consumer-integration](13-consumer-integration.md)     | Required integration ergonomics for consumer apps.                           |
-| 14  | [release-and-tooling](14-release-and-tooling.md)       | Packaging shape, verification gates, commit hooks, CI and release pipelines. |
+| #   | Spec                                                   | Topic                                                                         |
+| --- | ------------------------------------------------------ | ----------------------------------------------------------------------------- |
+| 00  | [overview](00-overview.md)                             | Business goals, actors, architecture, glossary, IdP requirements.             |
+| 01  | [configuration](01-configuration.md)                   | Consumer configuration record and defaults.                                   |
+| 02  | [storage-contract](02-storage-contract.md)             | Browser storage usage, lifetimes, eviction.                                   |
+| 03  | [bootstrap-hydration](03-bootstrap-hydration.md)       | Provider mount, initial state, event subscriptions, SSR.                      |
+| 04  | [sign-in](04-sign-in.md)                               | Redirect to IdP, return-URL handling.                                         |
+| 05  | [callback](05-callback.md)                             | Post-IdP redirect processing.                                                 |
+| 06  | [silent-renewal](06-silent-renewal.md)                 | Automatic + manual token renewal.                                             |
+| 07  | [sign-out](07-sign-out.md)                             | Redirect to IdP logout.                                                       |
+| 08  | [access-token-retrieval](08-access-token-retrieval.md) | Off-component access-token access.                                            |
+| 09  | [identity-exposure](09-identity-exposure.md)           | Profile fields, roles, account URL.                                           |
+| 10  | [return-url-safety](10-return-url-safety.md)           | Open-redirect protection.                                                     |
+| 11  | [error-model](11-error-model.md)                       | Error sources, surfacing, recovery.                                           |
+| 12  | [user-manager-factory](12-user-manager-factory.md)     | Custom OIDC client injection.                                                 |
+| 13  | [consumer-integration](13-consumer-integration.md)     | Required integration ergonomics for consumer apps.                            |
+| 14  | [release-and-tooling](14-release-and-tooling.md)       | Packaging shape, verification gates, commit hooks, CI and release pipelines.  |
 | 15  | [source-reconciliation](15-source-reconciliation.md)   | Source/spec conflicts, open contract decisions and clean-room handoff status. |
 
 ## Glossary

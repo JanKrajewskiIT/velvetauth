@@ -1,0 +1,4 @@
+{
+  "extends": "@jankrajewskiit/configs/tsconfig/node-vite",
+  "include": ["vite.config.ts"]
+}
