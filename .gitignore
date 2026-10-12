@@ -1,24 +1,22 @@
 node_modules/
-dist/
-dist-ssr/
-*.local
-.env*
-AGENTS.md
 .husky/_/
+coverage/
+dist/
+build/
+.vscode/
+.idea/
 .DS_Store
 Thumbs.db
-desktop.ini
-*.swp
-*.swo
+*.log
 
-# Generated agent customizations
+.artifacts/
+.deployment/
+
 /AGENTS.md
 /CLAUDE.md
 /.claude
 /.codex
 /.cursor
-/.github/skills/
-/.github/instructions/
+/.github/skills
+/.github/instructions
 /.vscode/settings.json
-.artifacts/
-.deployment/
