@@ -18,8 +18,7 @@ concurrency:
 
 jobs:
   analysis:
-    if: github.event.repository.private == false || vars.CODEQL_ENABLED == 'true'
-    uses: JanKrajewskiIT/velvetconfigs/.github/workflows/codeql-analysis.yml@v3.6.0 # Pin the release commit before enabling.
+    uses: JanKrajewskiIT/velvetconfigs/.github/workflows/codeql-analysis.yml@aee5fce9314f35cf6fbbc8abe1ae92deae3601cc # v3.6.0
     permissions:
       actions: read
       contents: read
