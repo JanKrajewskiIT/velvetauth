@@ -91,7 +91,7 @@ Optional peer-dependency floors the framework's `devDependencies` MUST satisfy:
 | `.gitattributes` | `text=auto eol=lf` for all text files.                                                                                                                                              |
 | `.gitignore`     | Excludes `node_modules/`, build output, `.husky/_`, editor/OS noise, local env files, the regenerated root `AGENTS.md`. MUST NOT exclude the lockfile or the submodule directories. |
 | `.gitmodules`    | Declares exactly three submodule entries (`.claude`, `.cursor`, `.agents`) with identical `url` pointing at the organization-level upstream agent-guideline repository.             |
-| `CHANGELOG.md`   | A section for every published version, grouped at minimum into "Breaking", "Added", "Changed", "Fixed". Each version-bump commit MUST contain the corresponding changelog edit.     |
+| Shared changelog | A consolidated entry for every published version, grouped at minimum into "Breaking", "Added", "Changed", "Fixed". Each release MUST update the shared changelog.                   |
 
 ## Step 6 — Verification gate
 
@@ -195,7 +195,7 @@ The framework MUST ship a root-level `README.md` included in the published tarba
 - **Install** — package name, install command, `.npmrc` scope-to-registry entry, peer dependencies with minimum versions.
 - **Integration overview** — a minimal end-to-end example: provider mount, configuration record, off-component getter, sign-in / sign-out triggers.
 - **Surface table** — every public export with a one-line description, kept in sync with [13-consumer-integration](13-consumer-integration.md).
-- **Upgrading** — link to `CHANGELOG.md` entries; when a new major has shipped, the previous major's last-supported version.
+- **Upgrading** — link to the consolidated changelog; when a new major has shipped, the previous major's last-supported version.
 - **Provenance verification** — `npm audit signatures <package-name>` as a copy-pasteable one-liner, with a brief explanation of what a passing audit attests.
 - **Release workflow** — the bump → tag → push flow, and the broken-release recovery procedure (`npm deprecate` + superseding patch).
 - **Branch protection** — the checklist from Step 12 so a fresh fork can re-establish protection without guessing the contract.
