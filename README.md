@@ -163,3 +163,7 @@ Source verification includes Gitleaks, Semgrep, actionlint, zizmor and Trivy con
 Knip is available through `npm run deps:check` (JSON report) and `npm run deps:strict` (blocking unused-code check). CI records the report while the initial findings are reviewed; security scans remain blocking. Public library entry exports are preserved.
 
 Configure `CONFIGS_READ_TOKEN` for private Configs source access alongside the existing npm read token. See [shared security controls](https://github.com/JanKrajewskiIT/velvetconfigs/blob/v3.5.0/security/README.md) for required GitHub settings, reports, image signing, staging variables, WAF activation and manual acceptance checks.
+
+## Code quality
+
+The shared Configs policy runs architecture, duplication and strict unused-code checks through `npm run quality:check` in `verify`. See [quality controls and rollout](https://github.com/JanKrajewskiIT/velvetconfigs/blob/main/quality/README.md) for commands, reports and CodeQL activation. No tests or coverage gate are added.

@@ -1,6 +1,6 @@
 {
   "name": "@jankrajewskiit/auth",
-  "version": "3.5.4",
+  "version": "3.5.5",
   "type": "module",
   "license": "MIT",
   "description": "SolidJS browser-side OIDC authentication framework wrapping oidc-client-ts.",
@@ -43,7 +43,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "build": "vite build",
-    "verify": "npm run toolchain && npm run editor:check && npm run format:check && npm run typecheck && npm run lint && npm run build && npm run verify:pkg",
+    "verify": "npm run toolchain && npm run editor:check && npm run format:check && npm run typecheck && npm run lint && npm run quality:check && npm run build && npm run verify:pkg",
     "verify:pkg": "npm run verify:types && publint --strict && attw --pack . --entrypoints . --profile esm-only",
     "prepublishOnly": "npm run verify",
     "prepare": "husky",
@@ -54,7 +54,10 @@
     "editor:sync": "configs-editor --write",
     "editor:check": "configs-editor",
     "deps:check": "knip --no-exit-code --reporter json",
-    "deps:strict": "knip"
+    "deps:strict": "configs-unused",
+    "architecture:check": "configs-architecture",
+    "duplicates:report": "configs-duplicates",
+    "quality:check": "npm run architecture:check && npm run duplicates:report && npm run deps:strict"
   },
   "peerDependencies": {
     "oidc-client-ts": ">=3.1.0 <4",
@@ -62,7 +65,7 @@
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",
-    "@jankrajewskiit/configs": "^3.5.3",
+    "@jankrajewskiit/configs": "^3.6.0",
     "@types/node": "^26.6.5",
     "@typescript/native": "npm:typescript@^7.0.2",
     "eslint": "^10.12.0",
@@ -74,7 +77,9 @@
     "publint": "^0.3.25",
     "solid-js": "^1.9.17",
     "typescript": "npm:@typescript/typescript6@~6.0.2",
-    "vite": "^8.3.4"
+    "vite": "^8.3.4",
+    "dependency-cruiser": "^18.6.0",
+    "jscpd": "~5.4.1"
   },
   "overrides": {
     "eslint": "$eslint"

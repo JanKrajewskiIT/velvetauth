@@ -1,0 +1,6 @@
+{
+  "$schema": "./node_modules/@jankrajewskiit/configs/quality/schema.json",
+  "kind": "browser-library",
+  "paths": ["src"],
+  "tsConfig": "tsconfig.json"
+}

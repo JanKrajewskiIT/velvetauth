@@ -15,7 +15,7 @@ export const AUTH_ERROR_MESSAGES = {
   returnUrlCleanup: 'Failed to remove the stored return URL.',
 } as const;
 
-export const INTERACTION_REQUIRED_CODES = [
+const INTERACTION_REQUIRED_CODES = [
   'login_required',
   'interaction_required',
   'consent_required',

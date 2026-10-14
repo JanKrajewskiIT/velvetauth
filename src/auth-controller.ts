@@ -138,7 +138,9 @@ export const createAuthContextValue = (config: Accessor<OidcAuthConfig>): AuthCo
       unsubscribeRemoteSignOut();
     });
 
-    void (plan.isCallback ? processCallback(plan, manager) : lookupUser(plan, manager));
+    void (plan.isCallback ? processCallback(plan, manager) : lookupUser(plan, manager)).catch((error: unknown) =>
+      commit(() => unauthenticated(toErrorMessage(error))),
+    );
   };
 
   const bootstrapPlan = snapshot.bootstrap;

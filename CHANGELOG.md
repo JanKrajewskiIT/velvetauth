@@ -1,5 +1,10 @@
 # Changelog
 
+## 3.5.5
+
+- Handle unexpected detached authentication bootstrap failures in observable session state.
+- Require Configs 3.6 development tooling and add architecture, duplication and blocking unused-code checks.
+
 ## 3.4.2
 
 - Add shared source/image security gates, CycloneDX SBOMs, pinned CI tooling, periodic security scans and Knip reports without changing the package version.
