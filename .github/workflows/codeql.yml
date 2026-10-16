@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   analysis:
-    uses: JanKrajewskiIT/velvetconfigs/.github/workflows/codeql-analysis.yml@e9100fa7ea7797669afeb410b644cd46ff9c8064 # v3.7.0
+    uses: JanKrajewskiIT/velvetconfigs/.github/workflows/codeql-analysis.yml@b3237eb74b340e5d039a3383361d683d04629028 # v3.7.10
     permissions:
       actions: read
       contents: read

@@ -11,7 +11,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   source:
-    uses: JanKrajewskiIT/velvetconfigs/.github/workflows/security-source.yml@e9100fa7ea7797669afeb410b644cd46ff9c8064 # v3.7.0
+    uses: JanKrajewskiIT/velvetconfigs/.github/workflows/security-source.yml@b3237eb74b340e5d039a3383361d683d04629028 # v3.7.10
     secrets:
       CONFIGS_READ_TOKEN: ${{ secrets.CONFIGS_READ_TOKEN }}
   dependencies:
