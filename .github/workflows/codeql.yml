@@ -1,10 +1,6 @@
 name: CodeQL
 
 on:
-  pull_request:
-    branches: [main]
-  push:
-    branches: [main]
   schedule:
     - cron: '41 6 * * 2'
   workflow_dispatch: {}
@@ -14,7 +10,7 @@ permissions:
 
 jobs:
   analysis:
-    uses: JanKrajewskiIT/velvetconfigs/.github/workflows/codeql-analysis.yml@4fd5cec48d9007aee67644ce29fdedef392f1dea # v3.20.0
+    uses: JanKrajewskiIT/velvetconfigs/.github/workflows/codeql-analysis.yml@ad587f572dab1149288acf3f8001a7ea6ea9e225 # v3.21.0
     permissions:
       actions: read
       contents: read

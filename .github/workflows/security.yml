@@ -11,33 +11,13 @@ concurrency:
   cancel-in-progress: false
 jobs:
   source:
-    uses: JanKrajewskiIT/velvetconfigs/.github/workflows/security-source.yml@4fd5cec48d9007aee67644ce29fdedef392f1dea # v3.20.0
+    uses: JanKrajewskiIT/velvetconfigs/.github/workflows/security-source.yml@ad587f572dab1149288acf3f8001a7ea6ea9e225 # v3.21.0
     secrets:
       CONFIGS_READ_TOKEN: ${{ secrets.CONFIGS_READ_TOKEN }}
   dependencies:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    defaults:
-      run:
-        working-directory: .
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
-        with:
-          node-version-file: .nvmrc
-          registry-url: https://npm.pkg.github.com
-          scope: '@jankrajewskiit'
-      - name: Select declared npm
-        run: npm install --global "$(node -p "require('./package.json').packageManager")" --ignore-scripts --registry https://registry.npmjs.org
-      - name: Install without lifecycle scripts
-        run: npm ci --ignore-scripts
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_READ_TOKEN || secrets.GHCR_TOKEN || github.token }}
-          GHCR_TOKEN: ${{ secrets.NPM_READ_TOKEN || secrets.GHCR_TOKEN || github.token }}
-      - name: Audit current advisory database
-        run: npm run audit:deps
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_READ_TOKEN || secrets.GHCR_TOKEN || github.token }}
-          GHCR_TOKEN: ${{ secrets.NPM_READ_TOKEN || secrets.GHCR_TOKEN || github.token }}
+    uses: JanKrajewskiIT/velvetconfigs/.github/workflows/security-dependencies.yml@ad587f572dab1149288acf3f8001a7ea6ea9e225 # v3.21.0
+    with:
+      working-directory: .
+      node-version-file: .nvmrc
+    secrets:
+      NPM_READ_TOKEN: ${{ secrets.NPM_READ_TOKEN || secrets.GHCR_TOKEN }}

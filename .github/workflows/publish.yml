@@ -7,8 +7,10 @@ concurrency:
   group: publish-${{ github.ref_name }}
   cancel-in-progress: false
 jobs:
-  verify:
-    uses: ./.github/workflows/verify.yml
+  build:
+    uses: JanKrajewskiIT/velvetconfigs/.github/workflows/build-package.yml@ad587f572dab1149288acf3f8001a7ea6ea9e225 # v3.21.0
+    with:
+      package-artifact: velvet-package
     permissions:
       contents: read
       packages: read
@@ -16,8 +18,8 @@ jobs:
       NPM_READ_TOKEN: ${{ secrets.NPM_READ_TOKEN || secrets.GHCR_TOKEN }}
       CONFIGS_READ_TOKEN: ${{ secrets.CONFIGS_READ_TOKEN }}
   publish:
-    needs: verify
-    uses: JanKrajewskiIT/velvetconfigs/.github/workflows/publish-package.yml@4fd5cec48d9007aee67644ce29fdedef392f1dea # v3.20.0
+    needs: build
+    uses: JanKrajewskiIT/velvetconfigs/.github/workflows/publish-package.yml@ad587f572dab1149288acf3f8001a7ea6ea9e225 # v3.21.0
     permissions:
       contents: read
       packages: write
