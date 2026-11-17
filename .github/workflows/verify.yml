@@ -10,7 +10,7 @@ on:
         required: false
 jobs:
   verify:
-    uses: JanKrajewskiIT/velvetconfigs/.github/workflows/quality-package.yml@ad587f572dab1149288acf3f8001a7ea6ea9e225 # v3.21.0
+    uses: JanKrajewskiIT/velvetconfigs/.github/workflows/quality-package.yml@02dab9241be047d4c8da72a9dac3c2d2f3ac8451 # v3.26.0
     permissions:
       contents: read
       packages: read
