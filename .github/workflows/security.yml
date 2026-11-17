@@ -15,7 +15,7 @@ jobs:
     secrets:
       CONFIGS_READ_TOKEN: ${{ secrets.CONFIGS_READ_TOKEN }}
   dependencies:
-    uses: JanKrajewskiIT/velvetconfigs/.github/workflows/security-dependencies.yml@ad587f572dab1149288acf3f8001a7ea6ea9e225 # v3.21.0
+    uses: JanKrajewskiIT/velvetconfigs/.github/workflows/security-dependencies.yml@02dab9241be047d4c8da72a9dac3c2d2f3ac8451 # v3.26.0
     with:
       working-directory: .
       node-version-file: .nvmrc
